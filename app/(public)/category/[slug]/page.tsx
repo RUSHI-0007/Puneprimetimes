@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import { createPublicClient } from '@/lib/supabase/server';
 import { siteConfig } from '@/lib/site-config';
 import ArticleCard from '@/components/public/ArticleCard';
 import type { Article, Category } from '@/lib/types';
@@ -23,7 +23,7 @@ const PAGE_SIZE = 9;
 export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
-  const supabase = createClient();
+  const supabase = createPublicClient();
 
   const { data: category } = await supabase
     .from('categories')
@@ -66,7 +66,7 @@ export default async function CategoryPage({
   params,
   searchParams,
 }: CategoryPageProps) {
-  const supabase = createClient();
+  const supabase = createPublicClient();
   const page = Math.max(1, parseInt(searchParams?.page || '1', 10));
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;

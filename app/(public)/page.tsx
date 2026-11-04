@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import { createPublicClient } from '@/lib/supabase/server';
 import { siteConfig } from '@/lib/site-config';
 import ArticleCard from '@/components/public/ArticleCard';
 import type { Article, Category } from '@/lib/types';
@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const supabase = createClient();
+  const supabase = createPublicClient();
 
   // Fetch published articles with their category
   const [{ data: articles }, { data: categories }] = await Promise.all([

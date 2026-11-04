@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import { createPublicClient } from '@/lib/supabase/server';
 import { siteConfig } from '@/lib/site-config';
 import { formatDate, formatDateTime, formatTimeAgo } from '@/lib/utils/format-date';
 import RichTextRenderer from '@/components/public/RichTextRenderer';
@@ -23,7 +23,7 @@ interface NewsArticlePageProps {
 export async function generateMetadata({
   params,
 }: NewsArticlePageProps): Promise<Metadata> {
-  const supabase = createClient();
+  const supabase = createPublicClient();
 
   const { data: article } = await supabase
     .from('articles')
@@ -76,7 +76,7 @@ export async function generateMetadata({
 }
 
 export default async function NewsArticlePage({ params }: NewsArticlePageProps) {
-  const supabase = createClient();
+  const supabase = createPublicClient();
 
   // 1. Fetch current published article
   const { data: article, error } = await supabase

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createPublicClient } from '@/lib/supabase/server';
 import Header from '@/components/public/Header';
 import Footer from '@/components/public/Footer';
 import BreakingBanner from '@/components/public/BreakingBanner';
@@ -12,7 +12,7 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createClient();
+  const supabase = createPublicClient();
 
   // Fetch categories and any breaking news in parallel
   const [{ data: categories }, { data: breakingArticles }] = await Promise.all([

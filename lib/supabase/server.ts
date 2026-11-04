@@ -1,6 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
+/**
+ * Server client for authenticated operations (Admin Dashboard, login, edit, write).
+ * Uses Next.js request cookies.
+ */
 export function createClient() {
   const cookieStore = cookies();
 
@@ -18,10 +23,27 @@ export function createClient() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if middleware is refreshing sessions.
+            // Ignored when called from Server Components during rendering
           }
         },
+      },
+    }
+  );
+}
+
+/**
+ * Public client for static pages, ISR, and unauthenticated reader views
+ * (Homepage, News Article details, Category archives, Sitemap).
+ * Does NOT call cookies(), ensuring seamless static prerendering and fast edge caching on Vercel.
+ */
+export function createPublicClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key',
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
       },
     }
   );
