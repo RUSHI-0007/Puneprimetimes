@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { createPublicClient } from '@/lib/supabase/server';
 import { siteConfig } from '@/lib/site-config';
 import ArticleCard from '@/components/public/ArticleCard';
+import HighlightNewsCarousel from '@/components/public/HighlightNewsCarousel';
+import NewsBureauSection from '@/components/public/NewsBureauSection';
+import { Highlighter } from '@/components/ui/highlighter';
 import type { Article, Category } from '@/lib/types';
 import { Newspaper, Sparkles, TrendingUp, Layers } from 'lucide-react';
 
@@ -65,7 +68,7 @@ export default async function HomePage() {
   const feedArticles = remainingArticles.slice(4);
 
   return (
-    <div className="space-y-10 sm:space-y-14">
+    <div className="space-y-12 sm:space-y-16">
       {/* If No Articles at all */}
       {allArticles.length === 0 ? (
         <div className="py-20 text-center max-w-md mx-auto space-y-4">
@@ -89,7 +92,7 @@ export default async function HomePage() {
         </div>
       ) : (
         <>
-          {/* Hero & Top Dispatches Section */}
+          {/* 1. Hero & Top Dispatches Section */}
           <section className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Main Featured Hero (Col 8) */}
@@ -128,8 +131,13 @@ export default async function HomePage() {
             </div>
           </section>
 
-          {/* Category Filter Chips */}
-          <section className="pt-4 border-t border-neutral-200 dark:border-neutral-800">
+          {/* 2. Apple Cards Carousel: Highlight & Breaking News Focus */}
+          {allArticles.length > 1 && (
+            <HighlightNewsCarousel articles={allArticles} />
+          )}
+
+          {/* 3. Category Filter Chips */}
+          <section className="pt-2 border-t border-neutral-200 dark:border-neutral-800">
             <div className="flex items-center gap-2 mb-4">
               <Layers className="w-4 h-4 text-red-600" />
               <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-900 dark:text-white">
@@ -155,7 +163,7 @@ export default async function HomePage() {
             </div>
           </section>
 
-          {/* Latest Articles Grid */}
+          {/* 4. Latest Articles Grid */}
           <section className="space-y-6">
             <div className="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-neutral-800">
               <h2 className="text-xl sm:text-2xl font-serif font-black text-neutral-900 dark:text-white">
@@ -176,9 +184,11 @@ export default async function HomePage() {
               ))}
             </div>
           </section>
+
+          {/* 5. 3D Interactive News Bureau & Location Globe */}
+          <NewsBureauSection />
         </>
       )}
     </div>
   );
 }
-

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { siteConfig } from '@/lib/site-config';
 import CategoryNav from './CategoryNav';
+import { Highlighter } from '@/components/ui/highlighter';
 import type { Category } from '@/lib/types';
 import { ShieldCheck, Calendar } from 'lucide-react';
 
@@ -55,7 +56,10 @@ export default function Header({ categories, activeCategorySlug }: HeaderProps) 
           <div className="flex items-center justify-center gap-2 sm:gap-3 mt-1 sm:mt-1.5">
             <span className="h-px w-6 sm:w-12 bg-neutral-300 dark:bg-neutral-700 hidden sm:block" />
             <p className="text-[9px] min-[400px]:text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] sm:tracking-[0.25em] text-neutral-500 dark:text-neutral-400">
-              Independent Journalism for Pune & Beyond
+              Independent Journalism for{' '}
+              <Highlighter action="underline" color="#ef4444" strokeWidth={2}>
+                Pune & Beyond
+              </Highlighter>
             </p>
             <span className="h-px w-6 sm:w-12 bg-neutral-300 dark:bg-neutral-700 hidden sm:block" />
           </div>
