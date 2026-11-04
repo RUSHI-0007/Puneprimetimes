@@ -11,8 +11,8 @@ export default function Footer({ categories }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="mt-20 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-900 text-neutral-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12 md:py-16">
+    <footer className="mt-16 sm:mt-20 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-900 text-neutral-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand Info */}
           <div className="md:col-span-2 space-y-4">

@@ -476,15 +476,15 @@ export default function ArticleEditor({
 
       {/* Live Preview Modal */}
       {previewOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md p-4 sm:p-6 md:p-10 flex justify-center animate-in fade-in duration-200">
-          <div className="relative w-full max-w-4xl bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden my-auto">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md p-2 sm:p-6 md:p-10 flex justify-center animate-in fade-in duration-200">
+          <div className="relative w-full max-w-4xl bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl shadow-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden my-auto max-h-[94vh] flex flex-col">
             {/* Modal Top Bar */}
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-white/95 dark:bg-neutral-900/95 backdrop-blur border-b border-neutral-200 dark:border-neutral-800">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-6 py-3.5 bg-white/95 dark:bg-neutral-900/95 backdrop-blur border-b border-neutral-200 dark:border-neutral-800 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
                   Preview Mode
                 </span>
-                <span className="text-xs text-neutral-500">
+                <span className="text-xs text-neutral-500 truncate max-w-[150px] sm:max-w-none">
                   {selectedCategory?.name || 'Uncategorized'}
                 </span>
               </div>
@@ -497,7 +497,7 @@ export default function ArticleEditor({
             </div>
 
             {/* Preview Article Content */}
-            <div className="p-6 sm:p-10 max-w-3xl mx-auto space-y-6">
+            <div className="p-4 sm:p-8 md:p-10 max-w-3xl mx-auto space-y-4 sm:space-y-6 overflow-y-auto flex-1 w-full">
               {/* Category Pill */}
               {selectedCategory && (
                 <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-50 text-red-600 border border-red-200/50">
@@ -506,13 +506,13 @@ export default function ArticleEditor({
               )}
 
               {/* Title */}
-              <h1 className="text-2xl sm:text-4xl font-serif font-extrabold text-neutral-900 dark:text-white leading-tight">
+              <h1 className="text-xl sm:text-3xl md:text-4xl font-serif font-extrabold text-neutral-900 dark:text-white leading-tight">
                 {title || 'Untitled Article Headline'}
               </h1>
 
               {/* Excerpt */}
               {excerpt && (
-                <p className="text-lg text-neutral-600 dark:text-neutral-300 font-serif italic border-l-2 border-red-500 pl-4 py-1">
+                <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-300 font-serif italic border-l-2 border-red-500 pl-4 py-1 leading-relaxed">
                   {excerpt}
                 </p>
               )}

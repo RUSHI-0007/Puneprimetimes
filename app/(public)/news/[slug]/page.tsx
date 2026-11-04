@@ -161,7 +161,7 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
 
         {/* Excerpt / Lead */}
         {typedArticle.excerpt && (
-          <p className="text-lg sm:text-xl font-serif italic text-neutral-600 dark:text-neutral-300 border-l-4 border-red-600 pl-4 py-1.5 leading-relaxed">
+          <p className="text-base sm:text-xl font-serif italic text-neutral-600 dark:text-neutral-300 border-l-4 border-red-600 pl-3.5 sm:pl-4 py-1 sm:py-1.5 leading-relaxed">
             {typedArticle.excerpt}
           </p>
         )}
@@ -195,7 +195,7 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
       {/* Hero Cover Image */}
       {typedArticle.cover_image_url && (
         <figure className="space-y-2">
-          <div className="relative aspect-[16/9] w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg bg-neutral-100 dark:bg-neutral-900">
+          <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg bg-neutral-100 dark:bg-neutral-900">
             <Image
               src={typedArticle.cover_image_url}
               alt={typedArticle.title}

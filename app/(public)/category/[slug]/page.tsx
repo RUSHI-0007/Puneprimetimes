@@ -98,15 +98,15 @@ export default async function CategoryPage({
   return (
     <div className="space-y-8">
       {/* Category Masthead */}
-      <div className="py-6 sm:py-8 border-b border-neutral-200 dark:border-neutral-800">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-red-600 mb-2">
+      <div className="py-5 sm:py-8 border-b border-neutral-200 dark:border-neutral-800">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-red-600 mb-1.5 sm:mb-2">
           <Layers className="w-4 h-4" />
           News Beat
         </div>
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-black text-neutral-900 dark:text-white">
+        <h1 className="text-2xl min-[400px]:text-3xl sm:text-4xl md:text-5xl font-serif font-black text-neutral-900 dark:text-white">
           {category.name}
         </h1>
-        <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-400 mt-2 max-w-2xl">
+        <p className="text-xs sm:text-base text-neutral-500 dark:text-neutral-400 mt-1.5 sm:mt-2 max-w-2xl leading-relaxed">
           Complete verified coverage and breaking updates under {category.name} for Pune and surrounding regions.
         </p>
       </div>
@@ -142,7 +142,7 @@ export default async function CategoryPage({
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="pt-8 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+            <div className="pt-6 sm:pt-8 border-t border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
               <div>
                 <p className="text-xs text-neutral-500">
                   Showing page <span className="font-semibold text-neutral-900 dark:text-white">{page}</span> of{' '}

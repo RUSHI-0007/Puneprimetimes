@@ -128,7 +128,7 @@ export default function TiptapEditor({
   return (
     <div className="border border-neutral-200 dark:border-neutral-800 rounded-2xl bg-white dark:bg-neutral-900 overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-red-500/20 focus-within:border-red-500 transition-all">
       {/* Editorial Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 p-2 bg-neutral-50/80 dark:bg-neutral-800/60 border-b border-neutral-200 dark:border-neutral-800">
+      <div className="flex items-center gap-1 p-2 bg-neutral-50/80 dark:bg-neutral-800/60 border-b border-neutral-200 dark:border-neutral-800 overflow-x-auto no-scrollbar sm:flex-wrap">
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}

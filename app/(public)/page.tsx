@@ -136,10 +136,10 @@ export default async function HomePage() {
                 Explore News Beats
               </h3>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               <Link
                 href="/"
-                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                className="px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-xs font-semibold bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-sm"
               >
                 All Beats
               </Link>
@@ -147,7 +147,7 @@ export default async function HomePage() {
                 <Link
                   key={c.id}
                   href={`/category/${c.slug}`}
-                  className="px-3.5 py-1.5 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-red-50 hover:text-red-600 dark:hover:bg-neutral-700 transition-colors"
+                  className="px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-red-50 hover:text-red-600 dark:hover:bg-neutral-700 transition-colors"
                 >
                   {c.name}
                 </Link>

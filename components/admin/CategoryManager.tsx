@@ -186,7 +186,7 @@ export default function CategoryManager({
       </div>
 
       {/* Add New Category Box */}
-      <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm">
+      <div className="p-4 sm:p-6 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm">
         <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-4 flex items-center gap-2">
           <Tag className="w-4 h-4 text-red-600" />
           Add New Beat / Category
