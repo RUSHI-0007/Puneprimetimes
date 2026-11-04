@@ -17,3 +17,4 @@ export const siteConfig = {
     { name: 'Business', slug: 'business' },
   ],
 };
+

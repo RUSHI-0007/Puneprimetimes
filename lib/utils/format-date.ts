@@ -52,3 +52,4 @@ export function formatTimeAgo(dateString?: string | null): string {
 
   return formatDate(dateString);
 }
+

@@ -47,3 +47,4 @@ export function sanitizeHtml(dirtyHtml: string): string {
     ADD_ATTR: ['target', 'rel'],
   });
 }
+

@@ -157,3 +157,4 @@ export default function CoverImageUpload({ value, onChange }: CoverImageUploadPr
     </div>
   );
 }
+

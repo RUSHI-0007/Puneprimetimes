@@ -36,3 +36,4 @@ export default function BreakingBanner({ breakingArticle }: BreakingBannerProps)
     </div>
   );
 }
+

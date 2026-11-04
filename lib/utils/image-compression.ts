@@ -79,3 +79,4 @@ export async function uploadNewsImage(
     sizeBytes: compressedFile.size,
   };
 }
+

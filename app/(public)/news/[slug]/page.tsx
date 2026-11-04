@@ -258,3 +258,4 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
     </article>
   );
 }
+

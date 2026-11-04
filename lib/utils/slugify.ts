@@ -9,3 +9,4 @@ export function slugify(text: string): string {
     .replace(/[\s_-]+/g, '-') // Swap spaces and underscores for dashes
     .replace(/^-+|-+$/g, ''); // Trim leading and trailing dashes
 }
+

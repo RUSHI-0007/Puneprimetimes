@@ -457,3 +457,4 @@ values
     now() - interval '1 day'
   )
 on conflict (slug) do nothing;
+

@@ -63,3 +63,4 @@ export default function Header({ categories, activeCategorySlug }: HeaderProps) 
     </header>
   );
 }
+

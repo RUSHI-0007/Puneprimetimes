@@ -214,3 +214,4 @@ export default function AdminNav({ user, profile }: AdminNavProps) {
     </header>
   );
 }
+
