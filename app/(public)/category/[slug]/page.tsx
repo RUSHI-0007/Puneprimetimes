@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { createPublicClient } from '@/lib/supabase/server';
 import { siteConfig } from '@/lib/site-config';
 import ArticleCard from '@/components/public/ArticleCard';
+import { CategoryHero, CategoryEmptyState } from '@/components/public/CategoryHero';
 import type { Article, Category } from '@/lib/types';
-import { ChevronLeft, ChevronRight, Layers, Newspaper } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const revalidate = 60; // 60s ISR
 
@@ -98,40 +99,11 @@ export default async function CategoryPage({
   return (
     <div className="space-y-8">
       {/* Category Masthead */}
-      <div className="py-5 sm:py-8 border-b border-neutral-200 dark:border-neutral-800">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-red-600 mb-1.5 sm:mb-2">
-          <Layers className="w-4 h-4" />
-          News Beat
-        </div>
-        <h1 className="text-2xl min-[400px]:text-3xl sm:text-4xl md:text-5xl font-serif font-black text-neutral-900 dark:text-white">
-          {category.name}
-        </h1>
-        <p className="text-xs sm:text-base text-neutral-500 dark:text-neutral-400 mt-1.5 sm:mt-2 max-w-2xl leading-relaxed">
-          Complete verified coverage and breaking updates under {category.name} for Pune and surrounding regions.
-        </p>
-      </div>
+      <CategoryHero category={category} />
 
       {/* Articles Grid or Empty State */}
       {articleList.length === 0 ? (
-        <div className="py-16 text-center max-w-md mx-auto space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-neutral-100 dark:bg-neutral-800 text-neutral-400 flex items-center justify-center mx-auto">
-            <Newspaper className="w-6 h-6" />
-          </div>
-          <h3 className="text-lg font-bold text-neutral-800 dark:text-neutral-200">
-            No published stories in this beat yet
-          </h3>
-          <p className="text-xs text-neutral-500">
-            Our newsroom is tracking developing events. Check back shortly.
-          </p>
-          <div className="pt-2">
-            <Link
-              href="/"
-              className="text-xs font-semibold text-red-600 hover:underline"
-            >
-              &larr; Return to All Stories
-            </Link>
-          </div>
-        </div>
+        <CategoryEmptyState />
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">

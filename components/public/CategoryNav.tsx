@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/lib/i18n/language-context';
 import type { Category } from '@/lib/types';
 
@@ -11,9 +12,29 @@ interface CategoryNavProps {
 
 export default function CategoryNav({
   categories,
-  activeCategorySlug,
+  activeCategorySlug: propActiveCategorySlug,
 }: CategoryNavProps) {
   const { language, t } = useLanguage();
+  const pathname = usePathname();
+
+  // Detect active category slug: from props OR by inspecting current URL pathname (/category/[slug])
+  let activeCategorySlug = propActiveCategorySlug;
+  if (!activeCategorySlug && pathname?.startsWith('/category/')) {
+    const raw = pathname.replace('/category/', '').split('/')[0];
+    try {
+      activeCategorySlug = decodeURIComponent(raw);
+    } catch {
+      activeCategorySlug = raw;
+    }
+  }
+
+  // "All Stories" is active ONLY on the root page ('/') when no specific category is selected
+  const isHomeActive = !activeCategorySlug && (pathname === '/' || pathname === '');
+
+  const activePillClasses =
+    'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-semibold shadow-sm';
+  const inactivePillClasses =
+    'text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900 font-medium';
 
   return (
     <nav className="sticky top-0 z-30 bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md border-t border-b border-neutral-200 dark:border-neutral-800 shadow-sm">
@@ -23,9 +44,7 @@ export default function CategoryNav({
           <Link
             href="/"
             className={`whitespace-nowrap px-3 sm:px-3.5 py-1.5 rounded-full transition-all flex-shrink-0 text-xs sm:text-sm ${
-              !activeCategorySlug
-                ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-semibold shadow-sm'
-                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900'
+              isHomeActive ? activePillClasses : inactivePillClasses
             }`}
           >
             {t.allStories}
@@ -44,9 +63,7 @@ export default function CategoryNav({
                 key={category.id}
                 href={`/category/${category.slug}`}
                 className={`whitespace-nowrap px-3 sm:px-3.5 py-1.5 rounded-full transition-all flex-shrink-0 text-xs sm:text-sm ${
-                  isActive
-                    ? 'bg-red-600 text-white font-semibold shadow-sm'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900'
+                  isActive ? activePillClasses : inactivePillClasses
                 }`}
               >
                 {categoryName}
