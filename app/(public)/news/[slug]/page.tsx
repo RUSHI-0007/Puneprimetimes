@@ -43,8 +43,12 @@ export async function generateMetadata({
     const title = article.title;
     const description =
       article.excerpt || `${article.title} - Read full report on ${siteConfig.name}`;
-    const articleUrl = `${siteConfig.url}/news/${article.slug}`;
-    const ogImage = article.cover_image_url || `${siteConfig.url}/og-default.jpg`;
+    const baseUrl = siteConfig.url.replace(/\/$/, '');
+    const articleUrl = `${baseUrl}/news/${article.slug}`;
+    const rawImage = article.cover_image_url || '/og-image.jpg';
+    const ogImage = rawImage.startsWith('http')
+      ? rawImage
+      : `${baseUrl}${rawImage.startsWith('/') ? '' : '/'}${rawImage}`;
 
     return {
       title,
@@ -58,6 +62,7 @@ export async function generateMetadata({
         description,
         url: articleUrl,
         siteName: siteConfig.name,
+        locale: 'mr_IN',
         publishedTime: article.published_at || undefined,
         images: [
           {
@@ -197,7 +202,12 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
           </div>
 
           {/* Social Share Buttons */}
-          <ShareButtons title={typedArticle.title} url={currentUrl} />
+          <ShareButtons
+            title={typedArticle.title}
+            url={currentUrl}
+            excerpt={typedArticle.excerpt}
+            coverImageUrl={typedArticle.cover_image_url}
+          />
         </div>
       </header>
 
@@ -235,7 +245,12 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
             Help inform Pune residents and your community
           </p>
         </div>
-        <ShareButtons title={typedArticle.title} url={currentUrl} />
+        <ShareButtons
+          title={typedArticle.title}
+          url={currentUrl}
+          excerpt={typedArticle.excerpt}
+          coverImageUrl={typedArticle.cover_image_url}
+        />
       </div>
 
       {/* Related Stories Section */}

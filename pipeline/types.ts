@@ -4,6 +4,7 @@ export interface SourceConfig {
   language: 'mr' | 'en';
   url: string;
   active: boolean;
+  region?: 'pune' | 'baramati';
   note?: string;
 }
 
@@ -16,6 +17,7 @@ export interface FeedItem {
   outlet: string;
   language: 'mr' | 'en';
   sourceName: string;
+  region?: 'pune' | 'baramati';
   imageUrl?: string | null;
 }
 
@@ -27,6 +29,7 @@ export interface StoryCluster {
   languages: ('mr' | 'en')[];
   categoryHint: string;
   firstSeen: string;
+  region?: 'pune' | 'baramati';
   imageUrl?: string | null;
 }
 
@@ -36,6 +39,7 @@ export interface GeneratedArticleDraft {
   excerpt: string;
   language: 'mr' | 'en';
   categorySlug: string;
+  region?: 'pune' | 'baramati';
   cover_image_url?: string | null;
   content: {
     type: 'doc';

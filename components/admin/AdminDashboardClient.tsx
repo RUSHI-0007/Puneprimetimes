@@ -493,6 +493,19 @@ export default function AdminDashboardClient({
                                 {art.language === 'en' ? 'EN' : 'MR'}
                               </span>
 
+                              {/* Region Badge */}
+                              {art.flags?.region && (
+                                <span
+                                  className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                                    art.flags.region === 'baramati'
+                                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+                                      : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                                  }`}
+                                >
+                                  📍 {art.flags.region === 'baramati' ? 'बारामती' : 'पुणे'}
+                                </span>
+                              )}
+
                               {/* AI Draft Tag */}
                               {art.ai_generated && (
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">

@@ -3,6 +3,7 @@
     "name": "The Indian Express (Pune)",
     "outlet": "Indian Express",
     "language": "en",
+    "region": "pune",
     "url": "https://indianexpress.com/section/cities/pune/feed/",
     "active": true
   },
@@ -10,6 +11,7 @@
     "name": "The Indian Express (India)",
     "outlet": "Indian Express",
     "language": "en",
+    "region": "pune",
     "url": "https://indianexpress.com/section/india/feed/",
     "active": true
   },
@@ -17,6 +19,7 @@
     "name": "Times of India (Pune)",
     "outlet": "Times of India",
     "language": "en",
+    "region": "pune",
     "url": "https://timesofindia.indiatimes.com/rssfeeds/-2128821151.cms",
     "active": true
   },
@@ -24,6 +27,7 @@
     "name": "Times of India (India)",
     "outlet": "Times of India",
     "language": "en",
+    "region": "pune",
     "url": "https://timesofindia.indiatimes.com/rssfeeds/2950623.cms",
     "active": true
   },
@@ -31,6 +35,7 @@
     "name": "Lokmat (Pune)",
     "outlet": "Lokmat",
     "language": "mr",
+    "region": "pune",
     "url": "https://www.lokmat.com/rss/pune.xml",
     "active": true
   },
@@ -38,6 +43,7 @@
     "name": "Lokmat (Maharashtra)",
     "outlet": "Lokmat",
     "language": "mr",
+    "region": "pune",
     "url": "https://www.lokmat.com/rss/maharashtra.xml",
     "active": true
   },
@@ -45,6 +51,7 @@
     "name": "Sakal (Pune)",
     "outlet": "Sakal",
     "language": "mr",
+    "region": "pune",
     "url": "https://www.esakal.com/pune/feed",
     "active": false,
     "note": "Sakal discontinued standard public RSS feeds; skipped during live polling until feed endpoint is restored."
@@ -53,6 +60,7 @@
     "name": "ABP Majha (Pune)",
     "outlet": "ABP Majha",
     "language": "mr",
+    "region": "pune",
     "url": "https://marathi.abplive.com/news/pune/feed",
     "active": true
   },
@@ -60,6 +68,7 @@
     "name": "ABP Majha (Maharashtra)",
     "outlet": "ABP Majha",
     "language": "mr",
+    "region": "pune",
     "url": "https://marathi.abplive.com/news/maharashtra/feed",
     "active": true
   },
@@ -67,7 +76,32 @@
     "name": "TV9 Marathi (Pune)",
     "outlet": "TV9 Marathi",
     "language": "mr",
+    "region": "pune",
     "url": "https://www.tv9marathi.com/maharashtra/pune/feed",
+    "active": true
+  },
+  {
+    "name": "Google News (Pune Marathi)",
+    "outlet": "Google News (Pune)",
+    "language": "mr",
+    "region": "pune",
+    "url": "https://news.google.com/rss/search?q=%E0%A4%AA%E0%A5%81%E0%A4%A3%E0%A5%87&hl=mr&gl=IN&ceid=IN:mr",
+    "active": true
+  },
+  {
+    "name": "Google News (Baramati Marathi)",
+    "outlet": "Google News (Baramati)",
+    "language": "mr",
+    "region": "baramati",
+    "url": "https://news.google.com/rss/search?q=%E0%A4%AC%E0%A4%BE%E0%A4%B0%E0%A4%BE%E0%A4%AE%E0%A4%A4%E0%A5%80&hl=mr&gl=IN&ceid=IN:mr",
+    "active": true
+  },
+  {
+    "name": "Google News (Baramati English)",
+    "outlet": "Google News (Baramati)",
+    "language": "en",
+    "region": "baramati",
+    "url": "https://news.google.com/rss/search?q=Baramati&hl=en-IN&gl=IN&ceid=IN:en",
     "active": true
   }
 ]

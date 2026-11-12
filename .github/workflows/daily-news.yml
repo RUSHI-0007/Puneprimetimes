@@ -6,10 +6,14 @@ on:
     - cron: '0 1 * * *'
   workflow_dispatch:
     inputs:
-      max_stories:
-        description: 'Maximum stories to draft'
+      pune_stories:
+        description: 'Number of Pune stories to draft'
         required: false
-        default: '6'
+        default: '5'
+      baramati_stories:
+        description: 'Number of Baramati stories to draft'
+        required: false
+        default: '5'
       dry_run:
         description: 'Dry run mode (print drafts without saving to database)'
         required: false
@@ -34,19 +38,21 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Execute News Pipeline
+      - name: Execute News Pipeline (5 Pune + 5 Baramati)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ secrets.GEMINI_MODEL || 'gemini-3.5-flash-lite' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-          OUTPUT_LANGUAGES: 'mr,en'
+          OUTPUT_LANGUAGES: 'mr'
         run: |
-          MAX_COUNT="${{ github.event.inputs.max_stories || '6' }}"
+          PUNE_COUNT="${{ github.event.inputs.pune_stories || '5' }}"
+          BARAMATI_COUNT="${{ github.event.inputs.baramati_stories || '5' }}"
           DRY_RUN_FLAG=""
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             DRY_RUN_FLAG="--dry-run"
           fi
-          npx tsx pipeline/run.ts --max-stories=$MAX_COUNT $DRY_RUN_FLAG
+          npx tsx pipeline/run.ts --pune-stories=$PUNE_COUNT --baramati-stories=$BARAMATI_COUNT $DRY_RUN_FLAG
+
 

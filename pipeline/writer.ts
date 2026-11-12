@@ -178,15 +178,17 @@ Respond strictly with a JSON object (no markdown fences):
       excerpt: parsed.excerpt,
       language,
       categorySlug: parsed.categorySlug || 'city-metro',
+      region: cluster.region || 'pune',
       content: tiptapDoc,
       confidence,
       verification_notes: parsed.verification_notes || `Cross-referenced across ${cluster.outlets.join(', ')}.`,
-      image_suggestion: parsed.image_suggestion || 'Representative image of Pune city',
-      image_keywords: parsed.image_keywords || ['Pune', 'News'],
+      image_suggestion: parsed.image_suggestion || `Representative image of ${cluster.region === 'baramati' ? 'Baramati' : 'Pune'}`,
+      image_keywords: parsed.image_keywords || (cluster.region === 'baramati' ? ['Baramati', 'News'] : ['Pune', 'News']),
       flags: {
         needs_careful_review: Boolean(parsed.needs_careful_review),
         cluster_size: cluster.items.length,
         outlets: cluster.outlets,
+        region: cluster.region || 'pune',
         grounded
       },
       source_urls: sourceUrls

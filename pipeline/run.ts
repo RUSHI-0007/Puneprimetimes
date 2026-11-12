@@ -36,8 +36,15 @@ import { writeArticleDraft } from './writer';
 // Read arguments
 const args = process.argv.slice(2);
 const isDryRun = args.includes('--dry-run');
+const puneArg = args.find((a) => a.startsWith('--pune-stories='));
+const baramatiArg = args.find((a) => a.startsWith('--baramati-stories='));
 const maxStoriesArg = args.find((a) => a.startsWith('--max-stories='));
-const MAX_STORIES = maxStoriesArg ? parseInt(maxStoriesArg.split('=')[1], 10) : 6;
+
+// Default: 5 Pune stories + 5 Baramati stories (Total 10)
+const PUNE_STORIES = puneArg ? parseInt(puneArg.split('=')[1], 10) : 5;
+const BARAMATI_STORIES = baramatiArg ? parseInt(baramatiArg.split('=')[1], 10) : 5;
+const MAX_STORIES = maxStoriesArg ? parseInt(maxStoriesArg.split('=')[1], 10) : (PUNE_STORIES + BARAMATI_STORIES);
+
 const outputLanguages: ('mr' | 'en')[] = (process.env.OUTPUT_LANGUAGES || 'mr')
   .split(',')
   .map((l) => l.trim().toLowerCase() as 'mr' | 'en')
@@ -50,6 +57,7 @@ const rssParser = new Parser({
       ['media:thumbnail', 'mediaThumbnail', { keepArray: true }],
       ['enclosure', 'enclosure'],
       ['content:encoded', 'contentEncoded'],
+      ['source', 'sourceTag'],
     ]
   },
   headers: {
@@ -58,6 +66,42 @@ const rssParser = new Parser({
   },
   timeout: 12000
 });
+
+// Helper to detect story region (Pune vs Baramati)
+function detectItemRegion(title: string, summary: string, sourceRegion?: 'pune' | 'baramati'): 'pune' | 'baramati' {
+  if (sourceRegion === 'baramati') return 'baramati';
+  const text = `${title} ${summary}`.toLowerCase();
+  const baramatiKeywords = [
+    'baramati',
+    'बारामती',
+    'baramatikar',
+    'बारामतीकर',
+    'malegaon bk',
+    'माळेगाव',
+    'someshwar',
+    'सोमेश्वर',
+    'supe',
+    'सुपे',
+    'morgaon',
+    'मोरगाव',
+    'daund',
+    'दौंड',
+    'indapur',
+    'इंदापूर',
+    'yugendra pawar',
+    'युगेंद्र पवार',
+    'sunetra pawar',
+    'सुनेत्रा पवार',
+    'vidya pratishthan',
+    'विद्या प्रतिष्ठान',
+    'katewadi',
+    'काटेवाडी'
+  ];
+  if (baramatiKeywords.some((kw) => text.includes(kw))) {
+    return 'baramati';
+  }
+  return 'pune';
+}
 
 // Helper to extract image URL from RSS item
 function extractImageUrl(item: any): string | null {
@@ -227,15 +271,34 @@ async function runPipeline() {
 
         const summary = (item.contentSnippet || item.summary || item.content || '').replace(/<[^>]+>/g, '').trim();
         const imageUrl = extractImageUrl(item);
+
+        // Extract clean outlet name and strip redundant suffix if from Google News
+        const rawTag = item.sourceTag
+          ? typeof item.sourceTag === 'string'
+            ? item.sourceTag
+            : item.sourceTag?.['_'] || ''
+          : '';
+        const itemOutlet = rawTag.trim() || source.outlet;
+        let cleanTitle = title;
+        if (rawTag.trim()) {
+          const suffix = ` - ${rawTag.trim()}`;
+          if (cleanTitle.endsWith(suffix)) {
+            cleanTitle = cleanTitle.slice(0, -suffix.length).trim();
+          }
+        }
+
+        const itemRegion = detectItemRegion(cleanTitle, summary, source.region);
+
         rawItems.push({
           id: `item-${rawItems.length + 1}`,
-          title,
+          title: cleanTitle,
           link,
           pubDate: item.pubDate || new Date().toISOString(),
           summary,
-          outlet: source.outlet,
+          outlet: itemOutlet,
           language: source.language,
           sourceName: source.name,
+          region: itemRegion,
           imageUrl,
         });
         sourceItemCount++;
@@ -274,19 +337,32 @@ async function runPipeline() {
     return report;
   }
 
-  // Step 3: Cluster items by story (2+ outlets)
+  // Step 3: Cluster items by story (Target: 5 Pune + 5 Baramati)
   console.log('\n🧩 Step 2: Clustering stories across outlets with Gemini Flash-Lite...');
   let clusters: StoryCluster[] = [];
 
   if (gemini.isConfigured()) {
-    clusters = await clusterStories(freshItems, gemini, MAX_STORIES);
+    const puneFreshItems = freshItems.filter((i) => i.region === 'pune');
+    const baramatiFreshItems = freshItems.filter((i) => i.region === 'baramati');
+
+    console.log(`\n📊 Item breakdown by region:`);
+    console.log(`  - Pune items: ${puneFreshItems.length}`);
+    console.log(`  - Baramati items: ${baramatiFreshItems.length}`);
+
+    console.log(`\n🧩 Step 2a: Clustering Pune stories (target: ${PUNE_STORIES})...`);
+    const puneClusters = await clusterStories(puneFreshItems, gemini, PUNE_STORIES, 'pune');
+
+    console.log(`\n🧩 Step 2b: Clustering Baramati stories (target: ${BARAMATI_STORIES})...`);
+    const baramatiClusters = await clusterStories(baramatiFreshItems, gemini, BARAMATI_STORIES, 'baramati');
+
+    clusters = [...puneClusters, ...baramatiClusters];
   } else {
     console.warn('⚠️ GEMINI_API_KEY is not set! Skipping AI clustering.');
   }
 
   report.clustersFormed = clusters.length;
   report.eligibleClusters = clusters.length;
-  console.log(`Formed ${clusters.length} cross-outlet story clusters (each verified by >= 2 outlets).`);
+  console.log(`Formed ${clusters.length} total story clusters (${clusters.filter((c) => c.region === 'pune').length} Pune + ${clusters.filter((c) => c.region === 'baramati').length} Baramati).`);
 
   // Step 4: Write Draft Articles
   console.log('\n✍️ Step 3: Verifying facts and generating draft articles...');
@@ -369,6 +445,7 @@ async function runPipeline() {
             source_urls: draft.source_urls,
             flags: {
               ...draft.flags,
+              region: cluster.region || draft.region || 'pune',
               image_credit: imageCredit
             }
           })

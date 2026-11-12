@@ -3,20 +3,33 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Share2, Link as LinkIcon, Check, MessageCircle } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n/language-context';
 
 interface ShareButtonsProps {
   title: string;
   url: string;
+  excerpt?: string | null;
+  coverImageUrl?: string | null;
 }
 
-export default function ShareButtons({ title, url }: ShareButtonsProps) {
+export default function ShareButtons({ title, url, excerpt }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
+  const { language } = useLanguage();
+
+  // If in browser on production, ensure the public canonical domain is used
+  const cleanUrl = url.replace(/http:\/\/localhost:3000/, 'https://www.puneprimetimes.in');
+
+  // Formatted WhatsApp message: Bold headline + Link to full story
+  const whatsappMessage =
+    language === 'mr'
+      ? `*${title}*\n\n${excerpt ? `${excerpt}\n\n` : ''}📍 *सविस्तर बातमी वाचा:*\n${cleanUrl}\n\n📰 *पुणे प्राईम टाईम्स* | सत्य. वेग. विश्वास.`
+      : `*${title}*\n\n${excerpt ? `${excerpt}\n\n` : ''}📍 *Read Full Story:*\n${cleanUrl}\n\n📰 *Pune Prime Times* | Truth. Speed. Insight.`;
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(cleanUrl);
       setCopied(true);
-      toast.success('Link copied to clipboard!');
+      toast.success(language === 'mr' ? 'बातमीची लिंक कॉपी झाली!' : 'Link copied to clipboard!');
       setTimeout(() => setCopied(false), 2500);
     } catch {
       toast.error('Failed to copy link');
@@ -28,7 +41,8 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
       try {
         await navigator.share({
           title,
-          url,
+          text: whatsappMessage,
+          url: cleanUrl,
         });
       } catch {
         // User cancelled share
@@ -38,13 +52,11 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
     }
   };
 
-  const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
-    `${title}\n\nRead more at: ${url}`
-  )}`;
+  const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMessage)}`;
 
   const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
     title
-  )}&url=${encodeURIComponent(url)}`;
+  )}&url=${encodeURIComponent(cleanUrl)}`;
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
