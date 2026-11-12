@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatTimeAgo, formatDate } from '@/lib/utils/format-date';
+import { useLanguage } from '@/lib/i18n/language-context';
 import type { Article, Category } from '@/lib/types';
 import { Flame, Clock } from 'lucide-react';
 
@@ -13,7 +16,28 @@ export default function ArticleCard({
   article,
   variant = 'standard',
 }: ArticleCardProps) {
+  const { language, t } = useLanguage();
   const publishedDate = article.published_at || article.created_at;
+
+  const flags = article.flags as Record<string, any> | undefined;
+
+  // Language-aware Title & Excerpt
+  const displayTitle =
+    language === 'en' && flags?.title_en
+      ? flags.title_en
+      : article.title;
+
+  const displayExcerpt =
+    language === 'en' && flags?.excerpt_en
+      ? flags.excerpt_en
+      : article.excerpt;
+
+  // Localized Category Name
+  const categoryName = article.category
+    ? language === 'mr' && t.categories[article.category.slug]
+      ? t.categories[article.category.slug]
+      : article.category.name
+    : null;
 
   // HERO VARIANT (Featured Spotlight)
   if (variant === 'hero') {
@@ -24,7 +48,7 @@ export default function ArticleCard({
             {article.cover_image_url ? (
               <Image
                 src={article.cover_image_url}
-                alt={article.title}
+                alt={displayTitle}
                 fill
                 priority
                 unoptimized
@@ -41,12 +65,13 @@ export default function ArticleCard({
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               {article.is_breaking && (
                 <span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-red-600 text-white shadow-sm">
-                  <Flame className="w-3 h-3 fill-white" /> Breaking
+                  <Flame className="w-3 h-3 fill-white" />
+                  {language === 'mr' ? 'ब्रेकिंग' : 'Breaking'}
                 </span>
               )}
-              {article.category && (
+              {categoryName && (
                 <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-white/20 backdrop-blur-md text-white border border-white/10">
-                  {article.category.name}
+                  {categoryName}
                 </span>
               )}
               <span className="text-[11px] sm:text-xs text-neutral-300 flex items-center gap-1">
@@ -56,12 +81,12 @@ export default function ArticleCard({
             </div>
 
             <h2 className="text-lg min-[400px]:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-serif font-black leading-tight sm:leading-snug group-hover:text-red-400 transition-colors line-clamp-2 sm:line-clamp-3">
-              {article.title}
+              {displayTitle}
             </h2>
 
-            {article.excerpt && (
+            {displayExcerpt && (
               <p className="text-xs sm:text-sm md:text-base text-neutral-300 line-clamp-2 max-w-3xl font-normal leading-relaxed hidden sm:block">
-                {article.excerpt}
+                {displayExcerpt}
               </p>
             )}
           </div>
@@ -81,7 +106,7 @@ export default function ArticleCard({
           >
             <Image
               src={article.cover_image_url}
-              alt=""
+              alt={displayTitle}
               fill
               unoptimized
               className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -90,16 +115,16 @@ export default function ArticleCard({
           </Link>
         )}
         <div className="flex-1 min-w-0 space-y-1">
-          {article.category && (
+          {categoryName && (
             <Link
-              href={`/category/${article.category.slug}`}
+              href={`/category/${article.category?.slug}`}
               className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400 hover:underline"
             >
-              {article.category.name}
+              {categoryName}
             </Link>
           )}
           <h3 className="font-serif font-bold text-xs sm:text-sm md:text-base text-neutral-900 dark:text-white leading-snug group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors line-clamp-2">
-            <Link href={`/news/${article.slug}`}>{article.title}</Link>
+            <Link href={`/news/${article.slug}`}>{displayTitle}</Link>
           </h3>
           <span className="text-[10px] sm:text-[11px] text-neutral-400 block">
             {formatTimeAgo(publishedDate)}
@@ -119,7 +144,7 @@ export default function ArticleCard({
         {article.cover_image_url ? (
           <Image
             src={article.cover_image_url}
-            alt={article.title}
+            alt={displayTitle}
             fill
             unoptimized
             className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -127,13 +152,13 @@ export default function ArticleCard({
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-800 dark:to-neutral-900 flex items-center justify-center text-neutral-400 text-xs">
-            {article.category?.name || 'News'}
+            {categoryName || 'News'}
           </div>
         )}
-        {article.category && (
+        {categoryName && (
           <div className="absolute top-2.5 sm:top-3 left-2.5 sm:left-3">
             <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-white/95 dark:bg-neutral-900/95 text-neutral-900 dark:text-white shadow-sm backdrop-blur">
-              {article.category.name}
+              {categoryName}
             </span>
           </div>
         )}
@@ -148,12 +173,12 @@ export default function ArticleCard({
           </div>
 
           <h3 className="font-serif font-bold text-base sm:text-lg text-neutral-900 dark:text-white leading-snug group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors line-clamp-2">
-            <Link href={`/news/${article.slug}`}>{article.title}</Link>
+            <Link href={`/news/${article.slug}`}>{displayTitle}</Link>
           </h3>
 
-          {article.excerpt && (
+          {displayExcerpt && (
             <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2 leading-relaxed">
-              {article.excerpt}
+              {displayExcerpt}
             </p>
           )}
         </div>
@@ -163,7 +188,7 @@ export default function ArticleCard({
             href={`/news/${article.slug}`}
             className="hover:underline flex items-center gap-1"
           >
-            Read Story &rarr;
+            {t.readStory} &rarr;
           </Link>
         </div>
       </div>

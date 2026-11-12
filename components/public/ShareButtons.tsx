@@ -9,9 +9,17 @@ interface ShareButtonsProps {
   url: string;
   excerpt?: string | null;
   coverImageUrl?: string | null;
+  reporterName?: string | null;
+  reporterEmail?: string | null;
 }
 
-export default function ShareButtons({ title, url, excerpt }: ShareButtonsProps) {
+export default function ShareButtons({
+  title,
+  url,
+  excerpt,
+  reporterName,
+  reporterEmail,
+}: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
   const { language } = useLanguage();
 
@@ -20,11 +28,18 @@ export default function ShareButtons({ title, url, excerpt }: ShareButtonsProps)
     .replace(/^https?:\/\/localhost(:\d+)?/, 'https://www.puneprimetimes.in')
     .replace(/^https?:\/\/puneprimetimes\.in/, 'https://www.puneprimetimes.in');
 
-  // Formatted WhatsApp message: Bold headline + Link to full story + Tagline
+  // Reporter Byline for WhatsApp message
+  const reporterByline = reporterName
+    ? language === 'mr'
+      ? `✍️ *वार्ताहर:* ${reporterName}${reporterEmail ? ` | 📧 ${reporterEmail}` : ''}\n\n`
+      : `✍️ *Reporter:* ${reporterName}${reporterEmail ? ` | 📧 ${reporterEmail}` : ''}\n\n`
+    : '';
+
+  // Formatted WhatsApp message: Bold headline + Excerpt + Reporter + Link + Tagline
   const whatsappMessage =
     language === 'mr'
-      ? `*${title}*\n\n${excerpt ? `${excerpt}\n\n` : ''}📍 *सविस्तर बातमी वाचा:*\n${cleanUrl}\n\n📰 *पुणे प्राईम टाईम्स* | सत्य. वेग. विश्वास.`
-      : `*${title}*\n\n${excerpt ? `${excerpt}\n\n` : ''}📍 *Read Full Story:*\n${cleanUrl}\n\n📰 *Pune Prime Times* | Truth. Speed. Insight.`;
+      ? `*${title}*\n\n${excerpt ? `${excerpt}\n\n` : ''}${reporterByline}📍 *सविस्तर बातमी वाचा:*\n${cleanUrl}\n\n📰 *पुणे प्राईम टाईम्स* | सत्य. वेग. विश्वास.`
+      : `*${title}*\n\n${excerpt ? `${excerpt}\n\n` : ''}${reporterByline}📍 *Read Full Story:*\n${cleanUrl}\n\n📰 *Pune Prime Times* | Truth. Speed. Insight.`;
 
   const handleCopyLink = async () => {
     try {

@@ -1,0 +1,241 @@
+'use client';
+
+import Link from 'next/link';
+import { useLanguage } from '@/lib/i18n/language-context';
+import { formatDateTime, formatTimeAgo } from '@/lib/utils/format-date';
+import RichTextRenderer from '@/components/public/RichTextRenderer';
+import ShareButtons from '@/components/public/ShareButtons';
+import ArticleCard from '@/components/public/ArticleCard';
+import type { Article, Category } from '@/lib/types';
+import {
+  Calendar,
+  ArrowLeft,
+  Flame,
+  Sparkles,
+  Globe2,
+} from 'lucide-react';
+
+interface ArticleDetailViewProps {
+  article: Article & { category?: Category | null };
+  currentUrl: string;
+  relatedArticles: (Article & { category?: Category | null })[];
+}
+
+export default function ArticleDetailView({
+  article,
+  currentUrl,
+  relatedArticles,
+}: ArticleDetailViewProps) {
+  const { language, setLanguage, t } = useLanguage();
+  const flags = article.flags as Record<string, any> | undefined;
+
+  // Bilingual Title, Excerpt, and Content
+  const displayTitle =
+    language === 'en' && flags?.title_en
+      ? flags.title_en
+      : article.title;
+
+  const displayExcerpt =
+    language === 'en' && flags?.excerpt_en
+      ? flags.excerpt_en
+      : article.excerpt;
+
+  const displayContent =
+    language === 'en' && flags?.content_en
+      ? flags.content_en
+      : article.content;
+
+  const categoryName = article.category
+    ? language === 'mr' && t.categories[article.category.slug]
+      ? t.categories[article.category.slug]
+      : article.category.name
+    : null;
+
+  const reporterName =
+    flags?.reporter_name ||
+    flags?.author_name ||
+    (language === 'mr' ? 'संपादकीय कक्ष' : 'Editorial Bureau');
+
+  const reporterEmail = flags?.reporter_email;
+
+  const reporterInitials = flags?.reporter_name
+    ? String(flags.reporter_name)
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : 'PPT';
+
+  return (
+    <article className="max-w-4xl mx-auto space-y-8">
+      {/* Breadcrumb & Navigation */}
+      <div className="flex items-center justify-between text-xs text-neutral-500">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 hover:text-red-600 transition-colors font-medium"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          {language === 'mr' ? 'मुख्य पानाकडे परत' : 'Back to Top Stories'}
+        </Link>
+
+        {categoryName && (
+          <Link
+            href={`/category/${article.category?.slug}`}
+            className="hover:underline font-bold uppercase tracking-wider text-red-600"
+          >
+            {categoryName}
+          </Link>
+        )}
+      </div>
+
+      {/* Article Header */}
+      <header className="space-y-4">
+        {/* Badges + Quick Language Toggle */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {article.is_breaking && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-red-600 text-white animate-pulse">
+                <Flame className="w-3.5 h-3.5 fill-white" />
+                {language === 'mr' ? 'महत्त्वाची बातमी' : 'Breaking Report'}
+              </span>
+            )}
+            {article.is_featured && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                <Sparkles className="w-3.5 h-3.5" />
+                {language === 'mr' ? 'विशेष बातमी' : 'Spotlight'}
+              </span>
+            )}
+            {categoryName && (
+              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
+                {categoryName}
+              </span>
+            )}
+          </div>
+
+          {/* On-Page Fast Language Switcher Pill */}
+          <button
+            type="button"
+            onClick={() => setLanguage(language === 'mr' ? 'en' : 'mr')}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 transition-colors shadow-sm"
+            title={language === 'mr' ? 'इंग्रजीत वाचा' : 'Read in Marathi'}
+          >
+            <Globe2 className="w-3.5 h-3.5 text-red-600" />
+            <span>{language === 'mr' ? 'Read in English' : 'मराठीत वाचा'}</span>
+          </button>
+        </div>
+
+        {/* Big Bold Headline */}
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-serif font-black text-neutral-950 dark:text-white leading-tight sm:leading-tight">
+          {displayTitle}
+        </h1>
+
+        {/* Excerpt / Lead */}
+        {displayExcerpt && (
+          <p className="text-base sm:text-xl font-serif italic text-neutral-600 dark:text-neutral-300 border-l-4 border-red-600 pl-3.5 sm:pl-4 py-1 sm:py-1.5 leading-relaxed">
+            {displayExcerpt}
+          </p>
+        )}
+
+        {/* Byline & Timestamps */}
+        <div className="pt-2 pb-4 border-b border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-neutral-500">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-red-600 text-white font-serif font-bold flex items-center justify-center text-sm shadow-sm flex-shrink-0">
+              {reporterInitials}
+            </div>
+            <div>
+              <p className="font-bold text-neutral-900 dark:text-white text-sm">
+                {reporterName}
+              </p>
+              {reporterEmail && (
+                <p className="text-[11px] text-neutral-400">
+                  {String(reporterEmail)}
+                </p>
+              )}
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {formatDateTime(article.published_at || article.created_at)}
+                </span>
+                <span>•</span>
+                <span>{formatTimeAgo(article.published_at || article.created_at)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Social Share Buttons */}
+          <ShareButtons
+            title={displayTitle}
+            url={currentUrl}
+            excerpt={displayExcerpt}
+            coverImageUrl={article.cover_image_url}
+            reporterName={flags?.reporter_name || flags?.author_name}
+            reporterEmail={flags?.reporter_email}
+          />
+        </div>
+      </header>
+
+      {/* Hero Cover Image */}
+      {article.cover_image_url && (
+        <figure className="space-y-2">
+          <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg bg-neutral-100 dark:bg-neutral-900">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={article.cover_image_url}
+              alt={displayTitle}
+              className="w-full h-full object-cover"
+              loading="eager"
+            />
+          </div>
+          <figcaption className="text-xs text-center text-neutral-400 italic">
+            {flags?.image_credit || (language === 'mr' ? 'पुणे प्राईम टाईम्स विशेष वृत्त' : 'Pune Prime Times Special Dispatch')}
+          </figcaption>
+        </figure>
+      )}
+
+      {/* Main Body Rich Text Content */}
+      <section className="pt-4 max-w-3xl mx-auto">
+        <RichTextRenderer content={displayContent} />
+      </section>
+
+      {/* Bottom Share Section */}
+      <div className="pt-8 pb-8 border-t border-b border-neutral-200 dark:border-neutral-800 max-w-3xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h4 className="text-sm font-bold text-neutral-900 dark:text-white">
+            {language === 'mr' ? 'ही बातमी शेअर करा' : 'Share this news story'}
+          </h4>
+          <p className="text-xs text-neutral-500">
+            {language === 'mr'
+              ? 'पुणेकर नागरिक व आपल्या परिचितांपर्यंत बातमी पोहोचवा'
+              : 'Help inform Pune residents and your community'}
+          </p>
+        </div>
+        <ShareButtons
+          title={displayTitle}
+          url={currentUrl}
+          excerpt={displayExcerpt}
+          coverImageUrl={article.cover_image_url}
+          reporterName={flags?.reporter_name || flags?.author_name}
+          reporterEmail={flags?.reporter_email}
+        />
+      </div>
+
+      {/* Related Stories Section */}
+      {relatedArticles && relatedArticles.length > 0 && (
+        <section className="pt-10 space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-neutral-800">
+            <h3 className="text-xl font-serif font-black text-neutral-900 dark:text-white">
+              {language === 'mr' ? 'संबंधित घडामोडी' : 'Related Coverage'}
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {relatedArticles.map((rel) => (
+              <ArticleCard key={rel.id} article={rel} variant="standard" />
+            ))}
+          </div>
+        </section>
+      )}
+    </article>
+  );
+}

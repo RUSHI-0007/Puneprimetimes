@@ -17,21 +17,12 @@ interface HomePageClientProps {
 export default function HomePageClient({ articles, categories }: HomePageClientProps) {
   const { language, t } = useLanguage();
 
-  // Filter articles by active language, with fallback to all articles if none yet published in that language
+  // All published articles have bilingual coverage (Marathi primary + English translation in flags)
   const filteredArticles = useMemo(() => {
-    const langMatches = articles.filter((a) => {
-      const artLang = a.language || 'mr';
-      return artLang === language;
-    });
-
-    if (langMatches.length > 0) {
-      return langMatches;
-    }
-    // If no articles match the selected language, show all published articles so the site isn't blank
     return articles;
-  }, [articles, language]);
+  }, [articles]);
 
-  // Identify Featured Hero article
+  // Identify Featured Hero article (prefers is_featured === true)
   const featuredArticle =
     filteredArticles.find((a) => a.is_featured) || filteredArticles[0] || null;
 
@@ -171,4 +162,3 @@ export default function HomePageClient({ articles, categories }: HomePageClientP
     </div>
   );
 }
-
