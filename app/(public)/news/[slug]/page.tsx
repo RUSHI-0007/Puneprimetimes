@@ -186,12 +186,19 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
         <div className="pt-2 pb-4 border-b border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-neutral-500">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-red-600 text-white font-serif font-bold flex items-center justify-center text-sm shadow-sm">
-              PPT
+              {typedArticle.flags?.reporter_name
+                ? String(typedArticle.flags.reporter_name).split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                : 'PPT'}
             </div>
             <div>
               <p className="font-bold text-neutral-900 dark:text-white text-sm">
-                Editorial Bureau
+                {typedArticle.flags?.reporter_name || typedArticle.flags?.author_name || 'Editorial Bureau'}
               </p>
+              {typedArticle.flags?.reporter_email && (
+                <p className="text-[11px] text-neutral-400">
+                  {String(typedArticle.flags.reporter_email)}
+                </p>
+              )}
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
