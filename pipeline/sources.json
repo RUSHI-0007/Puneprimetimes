@@ -1,0 +1,74 @@
+[
+  {
+    "name": "The Indian Express (Pune)",
+    "outlet": "Indian Express",
+    "language": "en",
+    "url": "https://indianexpress.com/section/cities/pune/feed/",
+    "active": true
+  },
+  {
+    "name": "The Indian Express (India)",
+    "outlet": "Indian Express",
+    "language": "en",
+    "url": "https://indianexpress.com/section/india/feed/",
+    "active": true
+  },
+  {
+    "name": "Times of India (Pune)",
+    "outlet": "Times of India",
+    "language": "en",
+    "url": "https://timesofindia.indiatimes.com/rssfeeds/-2128821151.cms",
+    "active": true
+  },
+  {
+    "name": "Times of India (India)",
+    "outlet": "Times of India",
+    "language": "en",
+    "url": "https://timesofindia.indiatimes.com/rssfeeds/2950623.cms",
+    "active": true
+  },
+  {
+    "name": "Lokmat (Pune)",
+    "outlet": "Lokmat",
+    "language": "mr",
+    "url": "https://www.lokmat.com/rss/pune.xml",
+    "active": true
+  },
+  {
+    "name": "Lokmat (Maharashtra)",
+    "outlet": "Lokmat",
+    "language": "mr",
+    "url": "https://www.lokmat.com/rss/maharashtra.xml",
+    "active": true
+  },
+  {
+    "name": "Sakal (Pune)",
+    "outlet": "Sakal",
+    "language": "mr",
+    "url": "https://www.esakal.com/pune/feed",
+    "active": false,
+    "note": "Sakal discontinued standard public RSS feeds; skipped during live polling until feed endpoint is restored."
+  },
+  {
+    "name": "ABP Majha (Pune)",
+    "outlet": "ABP Majha",
+    "language": "mr",
+    "url": "https://marathi.abplive.com/news/pune/feed",
+    "active": true
+  },
+  {
+    "name": "ABP Majha (Maharashtra)",
+    "outlet": "ABP Majha",
+    "language": "mr",
+    "url": "https://marathi.abplive.com/news/maharashtra/feed",
+    "active": true
+  },
+  {
+    "name": "TV9 Marathi (Pune)",
+    "outlet": "TV9 Marathi",
+    "language": "mr",
+    "url": "https://www.tv9marathi.com/maharashtra/pune/feed",
+    "active": true
+  }
+]
+

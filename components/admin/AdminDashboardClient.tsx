@@ -22,6 +22,9 @@ import {
   EyeOff,
   Send,
   FileText,
+  Bot,
+  AlertTriangle,
+  Languages,
 } from 'lucide-react';
 
 interface AdminDashboardClientProps {
@@ -36,7 +39,7 @@ export default function AdminDashboardClient({
   const router = useRouter();
   const [articles, setArticles] = useState(initialArticles);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft' | 'ai-drafts'>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   // Deletion modal state
@@ -46,6 +49,18 @@ export default function AdminDashboardClient({
 
   // Toggle publish state
   const handleToggleStatus = async (article: Article) => {
+    // Safety rule: AI drafts cannot be published via 1-click toggle without verification
+    if (article.ai_generated && article.status === 'draft') {
+      toast.info('AI drafts require manual fact-verification before publishing.', {
+        description: 'Click Edit to review source links and confirm verification.',
+        action: {
+          label: 'Open Editor',
+          onClick: () => router.push(`/admin/${article.id}/edit`),
+        },
+      });
+      return;
+    }
+
     const nextStatus = article.status === 'published' ? 'draft' : 'published';
     const supabase = createClient();
 
@@ -123,8 +138,14 @@ export default function AdminDashboardClient({
         art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         art.slug.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesStatus =
-        statusFilter === 'all' ? true : art.status === statusFilter;
+      let matchesStatus = true;
+      if (statusFilter === 'published') {
+        matchesStatus = art.status === 'published';
+      } else if (statusFilter === 'draft') {
+        matchesStatus = art.status === 'draft';
+      } else if (statusFilter === 'ai-drafts') {
+        matchesStatus = Boolean(art.ai_generated && art.status === 'draft');
+      }
 
       const matchesCategory =
         categoryFilter === 'all' ? true : art.category_id === categoryFilter;
@@ -138,8 +159,9 @@ export default function AdminDashboardClient({
     const total = articles.length;
     const published = articles.filter((a) => a.status === 'published').length;
     const drafts = articles.filter((a) => a.status === 'draft').length;
+    const aiDrafts = articles.filter((a) => a.ai_generated && a.status === 'draft').length;
     const breaking = articles.filter((a) => a.is_breaking).length;
-    return { total, published, drafts, breaking };
+    return { total, published, drafts, aiDrafts, breaking };
   }, [articles]);
 
   return (
@@ -151,7 +173,7 @@ export default function AdminDashboardClient({
             Editorial Articles
           </h1>
           <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            Manage your newsroom coverage, drafts, breaking dispatches, and publications.
+            Manage your newsroom coverage, Marathi/English drafts, and AI pipeline dispatches.
           </p>
         </div>
         <Link
@@ -164,7 +186,7 @@ export default function AdminDashboardClient({
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm">
           <span className="text-[11px] sm:text-xs font-semibold text-neutral-500 uppercase tracking-wider">
             Total Stories
@@ -173,6 +195,7 @@ export default function AdminDashboardClient({
             {stats.total}
           </p>
         </div>
+
         <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm">
           <span className="text-[11px] sm:text-xs font-semibold text-emerald-600 uppercase tracking-wider flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" />
@@ -182,6 +205,7 @@ export default function AdminDashboardClient({
             {stats.published}
           </p>
         </div>
+
         <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm">
           <span className="text-[11px] sm:text-xs font-semibold text-amber-600 uppercase tracking-wider flex items-center gap-1">
             <Clock className="w-3.5 h-3.5" />
@@ -191,7 +215,25 @@ export default function AdminDashboardClient({
             {stats.drafts}
           </p>
         </div>
-        <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm">
+
+        <div
+          onClick={() => setStatusFilter('ai-drafts')}
+          className={`p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer shadow-sm ${
+            statusFilter === 'ai-drafts'
+              ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/20'
+              : 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 hover:border-purple-300'
+          }`}
+        >
+          <span className="text-[11px] sm:text-xs font-semibold text-purple-600 uppercase tracking-wider flex items-center gap-1">
+            <Bot className="w-3.5 h-3.5" />
+            AI Drafts
+          </span>
+          <p className="text-xl sm:text-2xl font-bold text-purple-700 dark:text-purple-300 mt-0.5 sm:mt-1">
+            {stats.aiDrafts}
+          </p>
+        </div>
+
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm col-span-2 lg:col-span-1">
           <span className="text-[11px] sm:text-xs font-semibold text-red-600 uppercase tracking-wider flex items-center gap-1">
             <Flame className="w-3.5 h-3.5" />
             Breaking
@@ -250,6 +292,17 @@ export default function AdminDashboardClient({
             >
               Drafts
             </button>
+            <button
+              onClick={() => setStatusFilter('ai-drafts')}
+              className={`px-3 py-1.5 rounded-lg transition-colors flex-1 sm:flex-none text-center flex items-center justify-center gap-1.5 ${
+                statusFilter === 'ai-drafts'
+                  ? 'bg-white dark:bg-neutral-900 text-purple-600 dark:text-purple-400 shadow-sm font-semibold'
+                  : 'text-neutral-600 dark:text-neutral-400'
+              }`}
+            >
+              <Bot className="w-3.5 h-3.5" />
+              AI Drafts {stats.aiDrafts > 0 && `(${stats.aiDrafts})`}
+            </button>
           </div>
 
           {/* Category Dropdown */}
@@ -283,15 +336,6 @@ export default function AdminDashboardClient({
                 ? 'Try clearing your filters or search keywords.'
                 : 'Get started by creating your very first article.'}
             </p>
-            {articles.length === 0 && (
-              <Link
-                href="/admin/new"
-                className="inline-flex items-center gap-1.5 px-4 py-2 mt-4 rounded-xl bg-red-600 text-white text-xs font-semibold"
-              >
-                <PlusCircle className="w-4 h-4" />
-                Write First Story
-              </Link>
-            )}
           </div>
         ) : (
           <>
@@ -317,6 +361,7 @@ export default function AdminDashboardClient({
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        {/* Status Badge */}
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${
                             art.status === 'published'
@@ -333,81 +378,73 @@ export default function AdminDashboardClient({
                           />
                           {art.status}
                         </span>
-                        {art.category && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
-                            {art.category.name}
+
+                        {/* Language Tag */}
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+                          {art.language === 'en' ? 'EN' : 'MR'}
+                        </span>
+
+                        {/* AI Draft Badge */}
+                        {art.ai_generated && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                            <Bot className="w-2.5 h-2.5" /> AI Draft
                           </span>
                         )}
-                        {art.is_breaking && (
+
+                        {/* Confidence Badge */}
+                        {art.confidence && (
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                              art.confidence === 'high'
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                                : art.confidence === 'medium'
+                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                                : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
+                            }`}
+                          >
+                            {art.confidence}
+                          </span>
+                        )}
+
+                        {art.flags?.needs_careful_review && (
                           <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-700">
-                            <Flame className="w-2.5 h-2.5" /> Breaking
+                            <AlertTriangle className="w-2.5 h-2.5" /> Check
                           </span>
                         )}
                       </div>
+
                       <Link
                         href={`/admin/${art.id}/edit`}
                         className="font-medium text-sm text-neutral-900 dark:text-white line-clamp-2 leading-snug"
                       >
                         {art.title}
                       </Link>
-                      <span className="text-[11px] text-neutral-400 mt-1 block">
-                        {formatTimeAgo(art.published_at || art.updated_at)}
-                      </span>
                     </div>
                   </div>
 
-                  {/* Mobile Actions Bar */}
-                  <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800/60 flex items-center justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleStatus(art)}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border ${
-                        art.status === 'published'
-                          ? 'border-neutral-200 dark:border-neutral-700 text-neutral-600'
-                          : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300'
-                      }`}
-                    >
-                      {art.status === 'published' ? (
-                        <>
-                          <EyeOff className="w-3.5 h-3.5" /> Unpublish
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-3.5 h-3.5" /> Publish
-                        </>
-                      )}
-                    </button>
-
-                    {art.status === 'published' && (
+                  {/* Actions Bar */}
+                  <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800 text-xs">
+                    <span className="text-[11px] text-neutral-400">
+                      {formatDate(art.updated_at)}
+                    </span>
+                    <div className="flex items-center gap-2">
                       <Link
-                        href={`/news/${art.slug}`}
-                        target="_blank"
+                        href={`/admin/${art.id}/edit`}
                         className="p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300"
-                        title="View live story"
                       >
-                        <ExternalLink className="w-4 h-4" />
+                        <Edit3 className="w-4 h-4" />
                       </Link>
-                    )}
-
-                    <Link
-                      href={`/admin/${art.id}/edit`}
-                      className="p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300"
-                      title="Edit"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </Link>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setArticleToDelete(art);
-                        setDeleteModalOpen(true);
-                      }}
-                      className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setArticleToDelete(art);
+                          setDeleteModalOpen(true);
+                        }}
+                        className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/60 text-red-600 bg-red-50/50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -420,7 +457,7 @@ export default function AdminDashboardClient({
                   <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/75 dark:bg-neutral-800/40 text-[11px] uppercase tracking-wider text-neutral-500 font-semibold">
                     <th className="py-3.5 px-4 sm:px-6">Article</th>
                     <th className="py-3.5 px-4">Category</th>
-                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-4">Status & Type</th>
                     <th className="py-3.5 px-4">Date</th>
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
@@ -450,12 +487,48 @@ export default function AdminDashboardClient({
                             </div>
                           )}
                           <div className="min-w-0 max-w-md">
+                            <div className="flex items-center gap-1.5 mb-1">
+                              {/* Language badge */}
+                              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+                                {art.language === 'en' ? 'EN' : 'MR'}
+                              </span>
+
+                              {/* AI Draft Tag */}
+                              {art.ai_generated && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                                  <Bot className="w-3 h-3" /> AI Draft
+                                </span>
+                              )}
+
+                              {/* AI Confidence */}
+                              {art.confidence && (
+                                <span
+                                  className={`px-1.5 py-0.2 rounded text-[10px] font-bold uppercase ${
+                                    art.confidence === 'high'
+                                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                                      : art.confidence === 'medium'
+                                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                                      : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
+                                  }`}
+                                >
+                                  {art.confidence} Conf
+                                </span>
+                              )}
+
+                              {art.flags?.needs_careful_review && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold bg-red-100 text-red-700">
+                                  <AlertTriangle className="w-3 h-3" /> Review Needed
+                                </span>
+                              )}
+                            </div>
+
                             <Link
                               href={`/admin/${art.id}/edit`}
                               className="font-medium text-neutral-900 dark:text-white hover:text-red-600 dark:hover:text-red-400 transition-colors line-clamp-1"
                             >
                               {art.title}
                             </Link>
+
                             <div className="flex items-center gap-2 mt-0.5 text-xs text-neutral-400">
                               <span className="font-mono truncate max-w-[200px]">
                                 /news/{art.slug}
@@ -488,7 +561,7 @@ export default function AdminDashboardClient({
                         )}
                       </td>
 
-                      {/* Status Badge */}
+                      {/* Status */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${
@@ -522,59 +595,63 @@ export default function AdminDashboardClient({
 
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1">
-                          {/* Quick toggle publish */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(art)}
-                            className={`p-1.5 rounded-lg text-xs transition-colors ${
-                              art.status === 'published'
-                                ? 'text-neutral-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40'
-                                : 'text-neutral-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
-                            }`}
-                            title={
-                              art.status === 'published'
-                                ? 'Unpublish (Switch to draft)'
-                                : 'Quick Publish'
-                            }
-                          >
-                            {art.status === 'published' ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Send className="w-4 h-4" />
-                            )}
-                          </button>
+                        <div className="inline-flex items-center gap-1.5">
+                          {/* Publish/Draft Toggle or Review & Verify */}
+                          {art.ai_generated && art.status === 'draft' ? (
+                            <Link
+                              href={`/admin/${art.id}/edit`}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-sm transition-colors"
+                              title="Review AI Draft & Verify Facts"
+                            >
+                              <Bot className="w-3.5 h-3.5" />
+                              Review & Verify
+                            </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStatus(art)}
+                              className={`p-1.5 rounded-lg border transition-colors ${
+                                art.status === 'published'
+                                  ? 'border-amber-200 dark:border-amber-800 text-amber-600 hover:bg-amber-50'
+                                  : 'border-emerald-200 dark:border-emerald-800 text-emerald-600 hover:bg-emerald-50'
+                              }`}
+                              title={art.status === 'published' ? 'Revert to Draft' : 'Publish'}
+                            >
+                              {art.status === 'published' ? (
+                                <EyeOff className="w-4 h-4" />
+                              ) : (
+                                <Send className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
 
-                          {/* View Live */}
                           {art.status === 'published' && (
                             <Link
                               href={`/news/${art.slug}`}
                               target="_blank"
-                              className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                              title="View published article"
+                              className="p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100"
+                              title="View live story"
                             >
                               <ExternalLink className="w-4 h-4" />
                             </Link>
                           )}
 
-                          {/* Edit */}
                           <Link
                             href={`/admin/${art.id}/edit`}
-                            className="p-1.5 rounded-lg text-neutral-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-neutral-800 transition-colors"
-                            title="Edit article"
+                            className="p-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100"
+                            title="Edit"
                           >
                             <Edit3 className="w-4 h-4" />
                           </Link>
 
-                          {/* Delete */}
                           <button
                             type="button"
                             onClick={() => {
                               setArticleToDelete(art);
                               setDeleteModalOpen(true);
                             }}
-                            className="p-1.5 rounded-lg text-neutral-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-neutral-800 transition-colors"
-                            title="Delete article"
+                            className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/60 text-red-600 bg-red-50/50 hover:bg-red-100"
+                            title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -592,9 +669,8 @@ export default function AdminDashboardClient({
       {/* Delete Confirmation Modal */}
       <DeleteConfirmModal
         isOpen={deleteModalOpen}
-        title="Delete Article"
-        message={`Are you sure you want to permanently delete "${articleToDelete?.title}"? This action cannot be undone.`}
-        confirmText="Delete Article"
+        title="Delete Article?"
+        message={`Are you sure you want to permanently delete "${articleToDelete?.title}"? This cannot be undone.`}
         isDeleting={isDeleting}
         onConfirm={confirmDelete}
         onCancel={() => {

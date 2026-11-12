@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/utils/slugify';
-import { articleSchema, type ArticleFormValues } from '@/lib/validations/article';
+import { articleSchema } from '@/lib/validations/article';
 import CoverImageUpload from './CoverImageUpload';
 import TiptapEditor from './TiptapEditor';
 import RichTextRenderer from '@/components/public/RichTextRenderer';
@@ -25,6 +25,11 @@ import {
   Loader2,
   AlertCircle,
   ArrowLeft,
+  Bot,
+  ExternalLink,
+  ShieldCheck,
+  AlertTriangle,
+  Languages,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -48,6 +53,9 @@ export default function ArticleEditor({
   const [isSlugTouched, setIsSlugTouched] = useState(!!initialArticle?.slug);
   const [excerpt, setExcerpt] = useState(initialArticle?.excerpt || '');
   const [categoryId, setCategoryId] = useState(initialArticle?.category_id || '');
+  const [language, setLanguage] = useState<'mr' | 'en'>(
+    initialArticle?.language || 'mr'
+  );
   const [coverImageUrl, setCoverImageUrl] = useState(
     initialArticle?.cover_image_url || ''
   );
@@ -62,6 +70,12 @@ export default function ArticleEditor({
   );
   const [status, setStatus] = useState<'draft' | 'published'>(
     initialArticle?.status || 'draft'
+  );
+
+  // AI Draft & Verification State
+  const isAiGenerated = Boolean(initialArticle?.ai_generated);
+  const [hasConfirmedVerification, setHasConfirmedVerification] = useState(
+    initialArticle?.status === 'published'
   );
 
   // UI State
@@ -95,6 +109,14 @@ export default function ArticleEditor({
       return null;
     }
 
+    // Safety Gate: AI drafts MUST have verification confirmed before publishing
+    if (isAiGenerated && targetStatus === 'published' && !hasConfirmedVerification) {
+      if (!isAutoSave) {
+        toast.error('Please verify facts against sources and tick the confirmation checkbox before publishing.');
+      }
+      return null;
+    }
+
     const currentSlug = slug.trim() || slugify(title);
 
     const payload = {
@@ -105,12 +127,19 @@ export default function ArticleEditor({
       cover_image_url: coverImageUrl || null,
       category_id: categoryId || null,
       status: targetStatus,
+      language,
       is_featured: isFeatured,
       is_breaking: isBreaking,
       published_at:
         targetStatus === 'published'
           ? initialArticle?.published_at || new Date().toISOString()
           : null,
+      ai_generated: isAiGenerated,
+      confidence: initialArticle?.confidence || null,
+      verification_notes: initialArticle?.verification_notes || null,
+      image_suggestion: initialArticle?.image_suggestion || null,
+      source_urls: initialArticle?.source_urls || null,
+      flags: initialArticle?.flags || null,
     };
 
     // Client-side schema validation
@@ -153,7 +182,6 @@ export default function ArticleEditor({
         if (error) throw error;
         if (data?.id) {
           setArticleId(data.id);
-          // Silently update browser URL without re-mounting
           window.history.replaceState(null, '', `/admin/${data.id}/edit`);
         }
       }
@@ -189,6 +217,12 @@ export default function ArticleEditor({
       toast.error('Please assign a category before publishing');
       return;
     }
+
+    if (isAiGenerated && !hasConfirmedVerification) {
+      toast.error('Please tick "I verified the facts against the sources" before publishing.');
+      return;
+    }
+
     setSaving(true);
     const success = await persistArticle('published', false);
     setSaving(false);
@@ -218,9 +252,14 @@ export default function ArticleEditor({
     }, 30000);
 
     return () => clearTimeout(timer);
-  }, [isDirty, title, slug, excerpt, categoryId, coverImageUrl, content, isFeatured, isBreaking, status]);
+  }, [isDirty, title, slug, excerpt, categoryId, coverImageUrl, content, isFeatured, isBreaking, status, language]);
 
   const selectedCategory = categories.find((c) => c.id === categoryId);
+
+  // Parse source URLs if present
+  const sourceList: Array<{ outlet: string; url: string; title?: string }> = Array.isArray(initialArticle?.source_urls)
+    ? (initialArticle.source_urls as any)
+    : [];
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-16">
@@ -248,6 +287,12 @@ export default function ArticleEditor({
               >
                 {status}
               </span>
+              {isAiGenerated && (
+                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-bold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                  <Bot className="w-3 h-3" />
+                  AI Draft
+                </span>
+              )}
             </div>
             {lastAutosaved && (
               <p className="text-xs text-neutral-400 mt-0.5 flex items-center gap-1">
@@ -292,9 +337,14 @@ export default function ArticleEditor({
 
           <button
             type="button"
-            disabled={saving}
+            disabled={saving || (isAiGenerated && status !== 'published' && !hasConfirmedVerification)}
             onClick={handlePublish}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-md shadow-red-600/20 active:scale-95 transition-all disabled:opacity-50"
+            title={isAiGenerated && !hasConfirmedVerification ? 'Tick verification box first' : ''}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-xs font-semibold shadow-md transition-all ${
+              isAiGenerated && !hasConfirmedVerification
+                ? 'bg-neutral-400 dark:bg-neutral-700 cursor-not-allowed opacity-60'
+                : 'bg-red-600 hover:bg-red-700 shadow-red-600/20 active:scale-95'
+            }`}
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             {status === 'published' ? 'Update & Republish' : 'Publish Story'}
@@ -316,7 +366,7 @@ export default function ArticleEditor({
               required
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="e.g. Pune Metro Expands Services to Hinjawadi IT Corridor"
+              placeholder="e.g. पुणे मेट्रो ३ मार्गिकेचे तांत्रिक परीक्षण अंतिम टप्प्यात"
               className="w-full text-lg sm:text-xl font-serif font-bold px-4 py-3 rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:text-neutral-400 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
             />
           </div>
@@ -334,7 +384,7 @@ export default function ArticleEditor({
                 type="text"
                 value={slug}
                 onChange={(e) => handleSlugChange(e.target.value)}
-                placeholder="pune-metro-expands-services"
+                placeholder="pune-metro-trial-phase"
                 className="flex-1 py-2 px-2 bg-transparent text-neutral-900 dark:text-white outline-none font-mono"
               />
             </div>
@@ -352,21 +402,20 @@ export default function ArticleEditor({
             </div>
             <textarea
               rows={3}
-              maxLength={500}
               value={excerpt}
               onChange={(e) => {
                 setExcerpt(e.target.value);
                 setIsDirty(true);
               }}
-              placeholder="A concise, punchy 1-2 sentence lead for social media previews and article cards..."
-              className="w-full px-4 py-2.5 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all resize-y"
+              placeholder="A concise, 1-2 sentence lead summary..."
+              className="w-full text-sm px-4 py-3 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all resize-none"
             />
           </div>
 
-          {/* Tiptap Rich Text Editor */}
+          {/* Tiptap Rich Text Content Editor */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-600 dark:text-neutral-400 mb-1.5">
-              Article Body & Media
+              Article Body & Content *
             </label>
             <TiptapEditor
               content={content}
@@ -378,8 +427,121 @@ export default function ArticleEditor({
           </div>
         </div>
 
-        {/* Right 1 Col: Metadata & Settings Sidebar */}
+        {/* Right 1 Col: Metadata & AI Fact-Checking Sidebar */}
         <div className="space-y-6">
+          {/* AI Fact-Checking & Source Panel (If AI generated) */}
+          {isAiGenerated && (
+            <div className="p-5 rounded-2xl border-2 border-purple-200 dark:border-purple-900 bg-purple-50/40 dark:bg-purple-950/20 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-purple-900 dark:text-purple-300">
+                  <Bot className="w-4 h-4 text-purple-600" />
+                  AI Fact-Check Desk
+                </span>
+                {initialArticle?.confidence && (
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                      initialArticle.confidence === 'high'
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                        : initialArticle.confidence === 'medium'
+                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                        : 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'
+                    }`}
+                  >
+                    {initialArticle.confidence} Confidence
+                  </span>
+                )}
+              </div>
+
+              {/* Sensitive topic banner */}
+              {initialArticle?.flags?.needs_careful_review && (
+                <div className="p-3 rounded-xl bg-amber-100 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800 flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">Needs Careful Review:</span> This story was flagged for sensitive details (crime/unverified casualties).
+                  </div>
+                </div>
+              )}
+
+              {/* Verification Notes */}
+              {initialArticle?.verification_notes && (
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                    Verification Notes:
+                  </span>
+                  <p className="text-xs text-neutral-700 dark:text-neutral-300 bg-white/80 dark:bg-neutral-900/80 p-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 leading-relaxed whitespace-pre-wrap">
+                    {initialArticle.verification_notes}
+                  </p>
+                </div>
+              )}
+
+              {/* Clickable Source Links */}
+              {sourceList.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                    Original Source Outlets ({sourceList.length}):
+                  </span>
+                  <div className="space-y-1">
+                    {sourceList.map((src, idx) => (
+                      <a
+                        key={idx}
+                        href={src.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between p-2 rounded-lg bg-white/80 dark:bg-neutral-900/80 hover:bg-purple-100/50 dark:hover:bg-purple-900/30 border border-neutral-200 dark:border-neutral-800 text-xs text-neutral-800 dark:text-neutral-200 transition-colors group"
+                      >
+                        <span className="font-semibold text-purple-700 dark:text-purple-400 truncate max-w-[170px]">
+                          {src.outlet}
+                        </span>
+                        <ExternalLink className="w-3.5 h-3.5 text-neutral-400 group-hover:text-purple-600 transition-colors flex-shrink-0 ml-1" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Image Suggestion & Keywords */}
+              {initialArticle?.image_suggestion && (
+                <div className="space-y-1 text-xs">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                    Image Suggestion:
+                  </span>
+                  <p className="text-neutral-600 dark:text-neutral-400 italic">
+                    "{initialArticle.image_suggestion}"
+                  </p>
+                  {initialArticle?.flags?.keywords && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {initialArticle.flags.keywords.map((kw: string, i: number) => (
+                        <span key={i} className="px-1.5 py-0.5 rounded text-[10px] bg-neutral-200 dark:bg-neutral-800 font-mono">
+                          #{kw}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Mandatory Publishing Gate Checkbox */}
+              <div className="pt-3 border-t border-purple-200 dark:border-purple-900">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hasConfirmedVerification}
+                    onChange={(e) => setHasConfirmedVerification(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-red-600 rounded border-neutral-300 focus:ring-red-500"
+                  />
+                  <div className="text-xs">
+                    <span className="font-bold text-neutral-900 dark:text-white">
+                      I verified the facts against the sources
+                    </span>
+                    <p className="text-[11px] text-neutral-500 mt-0.5">
+                      Required by editorial policy before this AI draft can be published.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+          )}
+
           {/* Cover Photo */}
           <div className="p-5 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
             <CoverImageUpload
@@ -389,6 +551,44 @@ export default function ArticleEditor({
                 setIsDirty(true);
               }}
             />
+          </div>
+
+          {/* Language Selector */}
+          <div className="p-5 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm space-y-3">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
+              <Languages className="w-3.5 h-3.5 text-red-600" />
+              Article Language
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setLanguage('mr');
+                  setIsDirty(true);
+                }}
+                className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all ${
+                  language === 'mr'
+                    ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                    : 'border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800'
+                }`}
+              >
+                मराठी (Default)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLanguage('en');
+                  setIsDirty(true);
+                }}
+                className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all ${
+                  language === 'en'
+                    ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                    : 'border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800'
+                }`}
+              >
+                English
+              </button>
+            </div>
           </div>
 
           {/* Category Select */}
@@ -482,7 +682,7 @@ export default function ArticleEditor({
             <div className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-6 py-3.5 bg-white/95 dark:bg-neutral-900/95 backdrop-blur border-b border-neutral-200 dark:border-neutral-800 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
-                  Preview Mode
+                  Preview Mode ({language.toUpperCase()})
                 </span>
                 <span className="text-xs text-neutral-500 truncate max-w-[150px] sm:max-w-none">
                   {selectedCategory?.name || 'Uncategorized'}
@@ -517,29 +717,22 @@ export default function ArticleEditor({
                 </p>
               )}
 
-              {/* Metadata */}
-              <div className="text-xs text-neutral-500 flex items-center gap-2 pb-4 border-b border-neutral-200 dark:border-neutral-800">
-                <Clock className="w-3.5 h-3.5" />
-                <span>{formatDate(new Date().toISOString())}</span>
-                <span>•</span>
-                <span>By Editorial Staff</span>
-              </div>
-
               {/* Cover Image */}
               {coverImageUrl && (
-                <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden shadow-md">
+                <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden bg-neutral-100 dark:bg-neutral-800 my-4">
                   <Image
                     src={coverImageUrl}
                     alt={title}
                     fill
                     className="object-cover"
-                    sizes="800px"
                   />
                 </div>
               )}
 
-              {/* Rendered Body */}
-              <RichTextRenderer content={content} />
+              {/* Rich Body Content */}
+              <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800">
+                <RichTextRenderer content={content} />
+              </div>
             </div>
           </div>
         </div>
@@ -547,4 +740,3 @@ export default function ArticleEditor({
     </div>
   );
 }
-

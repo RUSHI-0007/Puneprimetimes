@@ -1,5 +1,5 @@
 export function slugify(text: string): string {
-  return text
+  const cleaned = text
     .toString()
     .toLowerCase()
     .trim()
@@ -8,5 +8,12 @@ export function slugify(text: string): string {
     .replace(/[^a-z0-9\s-]/g, '') // Remove invalid chars
     .replace(/[\s_-]+/g, '-') // Swap spaces and underscores for dashes
     .replace(/^-+|-+$/g, ''); // Trim leading and trailing dashes
+
+  if (!cleaned) {
+    // Fallback for non-latin headlines (e.g. Marathi / Devanagari script)
+    return `story-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
+  }
+
+  return cleaned;
 }
 

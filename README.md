@@ -213,5 +213,99 @@ where email = 'editor@puneprimetimes.com';
 
 ---
 
+---
+
+## 🤖 Automated AI News Pipeline & Verification Engine
+
+Pune Prime Times includes an automated, server-side daily news pipeline (`/pipeline`) that:
+1. Gathers top daily dispatches from trusted Indian & Marathi news outlets (Indian Express, Times of India, Lokmat, ABP Majha, TV9 Marathi).
+2. Clusters reports covering the same story across English and Marathi.
+3. Cross-verifies facts using Google Gemini Flash-Lite with rate-limiting (`MIN_SECONDS_BETWEEN_CALLS = 6`, `DAILY_CALL_BUDGET = 300`).
+4. Generates fact-checked original drafts in **Marathi (Default)** and **English**, formatted directly as Tiptap JSON with clickable source links.
+5. Saves each as `status = 'draft'` in Supabase with confidence scores, fact-check notes, and photo suggestions. **The pipeline NEVER publishes automatically.**
+6. Enforces a human editor verification safeguard in the Admin Dashboard: an editor must tick *"I verified the facts against the sources"* before any AI draft can go live.
+
+---
+
+### 🔑 1. How to Create Your Gemini API Key (Free Tier)
+1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. Sign in with your Google account.
+3. Click **Create API Key**.
+4. Select or create a project (e.g. `PunePrimeTimes-News`).
+5. Copy the generated key (`AIzaSy...`).
+
+---
+
+### 📍 2. Where to Paste Your Gemini API Key
+#### For Local Development:
+Open `.env.local` in your project root and add:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.0-flash-lite
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
+```
+*(You can find your `SUPABASE_SERVICE_ROLE_KEY` in Supabase Dashboard -> **Project Settings** -> **API** -> `service_role secret`)*.
+
+#### For GitHub Actions Scheduled Job:
+1. In your GitHub repository, click **Settings** -> **Secrets and variables** -> **Actions**.
+2. Click **New repository secret** and add:
+   - `GEMINI_API_KEY`: Your Gemini API key.
+   - `GEMINI_MODEL`: `gemini-2.0-flash-lite` (or leave default).
+   - `SUPABASE_URL`: Your Supabase URL (e.g. `https://opiclwhmaemcipueshvm.supabase.co`).
+   - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role secret key.
+   - `PEXELS_API_KEY`: *(Optional)* Free Pexels key if you wish to attach representative stock photos.
+
+---
+
+### 🚀 3. How to Run the Pipeline Manually
+
+#### A. Run a Local Dry Run (No Database Writes, Prints Drafts to Terminal):
+```bash
+npx tsx pipeline/run.ts --dry-run --max-stories=2
+```
+
+#### B. Run a Full Live Run Locally (Writes Drafts to Supabase):
+```bash
+npx tsx pipeline/run.ts --max-stories=6
+```
+
+#### C. Trigger Manually in GitHub Actions:
+1. Go to the **Actions** tab in your GitHub repository.
+2. Select **Daily AI News Pipeline** in the left sidebar.
+3. Click **Run workflow**, choose options (e.g. Dry Run: true/false, Max Stories), and click **Run workflow**.
+
+---
+
+### 📰 4. How to Add or Remove News Sources
+All sources are configured in `pipeline/sources.json`.
+To add a new RSS feed:
+```json
+{
+  "name": "Outlet Name (Section)",
+  "outlet": "Outlet Name",
+  "language": "mr",
+  "url": "https://example.com/rss.xml",
+  "active": true
+}
+```
+- Set `"active": false` to temporarily disable any feed without deleting it.
+- If an outlet's feed fails or returns an error, the pipeline skips it gracefully and logs it in the run report.
+
+---
+
+### 📊 5. How to Read the AI Run Logs
+Every run logs detailed metrics to the `public.ai_run_logs` table in Supabase:
+- `started_at` & `completed_at`: Exact execution timestamps.
+- `status`: `'success'`, `'partial'`, or `'failed'`.
+- `stories_found`: Total RSS feed items collected in the last 24h.
+- `clusters_formed`: Stories covered by 2+ different outlets.
+- `drafts_created`: Count of verified drafts saved to Supabase.
+- `api_calls_used`: Gemini API calls consumed (tracked against daily limit).
+- `errors`: JSON array of any feed or parsing warnings encountered.
+
+You can view these logs anytime in Supabase Dashboard -> **Table Editor** -> `ai_run_logs`.
+
+---
+
 © 2026 Pune Prime Times. Built for speed, truth, and modern journalism.
 

@@ -22,9 +22,16 @@ export const articleSchema = z.object({
   cover_image_url: z.string().url('Invalid cover image URL').optional().nullable().or(z.literal('')),
   category_id: z.string().uuid('Invalid category ID').optional().nullable().or(z.literal('')),
   status: z.enum(['draft', 'published']),
+  language: z.enum(['mr', 'en']).default('mr'),
   is_featured: z.boolean().default(false),
   is_breaking: z.boolean().default(false),
   published_at: z.string().datetime().optional().nullable(),
+  ai_generated: z.boolean().optional(),
+  confidence: z.enum(['high', 'medium', 'low']).optional().nullable(),
+  verification_notes: z.string().optional().nullable(),
+  image_suggestion: z.string().optional().nullable(),
+  source_urls: z.any().optional().nullable(),
+  flags: z.record(z.any()).optional().nullable(),
 });
 
 export const categorySchema = z.object({

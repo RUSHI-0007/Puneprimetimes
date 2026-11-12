@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Toaster } from 'sonner';
 import { siteConfig } from '@/lib/site-config';
+import { LanguageProvider } from '@/lib/i18n/language-context';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -69,9 +70,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="mr" className="scroll-smooth">
       <body className="min-h-screen flex flex-col font-sans">
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
         <Toaster position="top-right" richColors closeButton />
       </body>
     </html>

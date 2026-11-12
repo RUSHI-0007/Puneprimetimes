@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useLanguage } from '@/lib/i18n/language-context';
 import type { Category } from '@/lib/types';
 
 interface CategoryNavProps {
@@ -12,6 +13,8 @@ export default function CategoryNav({
   categories,
   activeCategorySlug,
 }: CategoryNavProps) {
+  const { language, t } = useLanguage();
+
   return (
     <nav className="sticky top-0 z-30 bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md border-t border-b border-neutral-200 dark:border-neutral-800 shadow-sm">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -25,12 +28,17 @@ export default function CategoryNav({
                 : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900'
             }`}
           >
-            All Stories
+            {t.allStories}
           </Link>
 
           {/* Category Links */}
           {categories.map((category) => {
             const isActive = activeCategorySlug === category.slug;
+            const categoryName =
+              language === 'mr' && t.categories[category.slug]
+                ? t.categories[category.slug]
+                : category.name;
+
             return (
               <Link
                 key={category.id}
@@ -41,7 +49,7 @@ export default function CategoryNav({
                     : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-950 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-900'
                 }`}
               >
-                {category.name}
+                {categoryName}
               </Link>
             );
           })}

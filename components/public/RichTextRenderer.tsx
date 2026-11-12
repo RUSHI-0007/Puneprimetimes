@@ -1,3 +1,5 @@
+'use client';
+
 import { useMemo } from 'react';
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';

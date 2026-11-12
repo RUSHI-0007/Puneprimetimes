@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { createPublicClient } from '@/lib/supabase/server';
 import { siteConfig } from '@/lib/site-config';
@@ -23,60 +22,70 @@ interface NewsArticlePageProps {
 export async function generateMetadata({
   params,
 }: NewsArticlePageProps): Promise<Metadata> {
-  const supabase = createPublicClient();
+  try {
+    const supabase = createPublicClient();
+    const rawSlug = params.slug;
+    const slug = decodeURIComponent(rawSlug);
 
-  const { data: article } = await supabase
-    .from('articles')
-    .select('title, excerpt, cover_image_url, slug, published_at')
-    .eq('slug', params.slug)
-    .eq('status', 'published')
-    .single();
+    const { data: article } = await supabase
+      .from('articles')
+      .select('title, excerpt, cover_image_url, slug, published_at')
+      .or(`slug.eq.${slug},slug.eq.${rawSlug}`)
+      .eq('status', 'published')
+      .maybeSingle();
 
-  if (!article) {
+    if (!article) {
+      return {
+        title: `Article Not Found | ${siteConfig.name}`,
+      };
+    }
+
+    const title = article.title;
+    const description =
+      article.excerpt || `${article.title} - Read full report on ${siteConfig.name}`;
+    const articleUrl = `${siteConfig.url}/news/${article.slug}`;
+    const ogImage = article.cover_image_url || `${siteConfig.url}/og-default.jpg`;
+
     return {
-      title: `Article Not Found | ${siteConfig.name}`,
+      title,
+      description,
+      alternates: {
+        canonical: articleUrl,
+      },
+      openGraph: {
+        type: 'article',
+        title,
+        description,
+        url: articleUrl,
+        siteName: siteConfig.name,
+        publishedTime: article.published_at || undefined,
+        images: [
+          {
+            url: ogImage,
+            width: 1200,
+            height: 630,
+            alt: title,
+          },
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [ogImage],
+      },
+    };
+  } catch {
+    return {
+      title: siteConfig.name,
     };
   }
-
-  const title = article.title;
-  const description =
-    article.excerpt || `${article.title} - Read full report on ${siteConfig.name}`;
-  const articleUrl = `${siteConfig.url}/news/${article.slug}`;
-  const ogImage = article.cover_image_url || `${siteConfig.url}/og-default.jpg`;
-
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: articleUrl,
-    },
-    openGraph: {
-      type: 'article',
-      title,
-      description,
-      url: articleUrl,
-      siteName: siteConfig.name,
-      publishedTime: article.published_at || undefined,
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: title,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [ogImage],
-    },
-  };
 }
 
 export default async function NewsArticlePage({ params }: NewsArticlePageProps) {
   const supabase = createPublicClient();
+  const rawSlug = params.slug;
+  const slug = decodeURIComponent(rawSlug);
 
   // 1. Fetch current published article
   const { data: article, error } = await supabase
@@ -85,9 +94,9 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
       *,
       category:categories(*)
     `)
-    .eq('slug', params.slug)
+    .or(`slug.eq.${slug},slug.eq.${rawSlug}`)
     .eq('status', 'published')
-    .single();
+    .maybeSingle();
 
   if (error || !article) {
     notFound();
@@ -196,17 +205,17 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
       {typedArticle.cover_image_url && (
         <figure className="space-y-2">
           <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg bg-neutral-100 dark:bg-neutral-900">
-            <Image
+            {/* Native img with full responsive styling to support all news outlet domains safely */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={typedArticle.cover_image_url}
               alt={typedArticle.title}
-              fill
-              priority
-              className="object-cover"
-              sizes="(max-width: 900px) 100vw, 900px"
+              className="w-full h-full object-cover"
+              loading="eager"
             />
           </div>
           <figcaption className="text-xs text-center text-neutral-400 italic">
-            Pune Prime Times News Dispatch
+            {typedArticle.flags?.image_credit || 'Pune Prime Times News Dispatch'}
           </figcaption>
         </figure>
       )}
@@ -258,4 +267,3 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
     </article>
   );
 }
-

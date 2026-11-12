@@ -27,6 +27,7 @@ export default function ArticleCard({
                 alt={article.title}
                 fill
                 priority
+                unoptimized
                 className="object-cover group-hover:scale-105 transition-transform duration-500 brightness-[0.88] group-hover:brightness-100"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 1200px"
               />
@@ -82,6 +83,7 @@ export default function ArticleCard({
               src={article.cover_image_url}
               alt=""
               fill
+              unoptimized
               className="object-cover group-hover:scale-105 transition-transform duration-300"
               sizes="112px"
             />
@@ -119,6 +121,7 @@ export default function ArticleCard({
             src={article.cover_image_url}
             alt={article.title}
             fill
+            unoptimized
             className="object-cover group-hover:scale-105 transition-transform duration-500"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
