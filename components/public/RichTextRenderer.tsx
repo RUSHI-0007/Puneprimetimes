@@ -1,6 +1,3 @@
-'use client';
-
-import { useMemo } from 'react';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
 
 interface RichTextRendererProps {
@@ -96,31 +93,20 @@ export default function RichTextRenderer({
   content,
   className = '',
 }: RichTextRendererProps) {
-  const renderedHtml = useMemo(() => {
-    if (!content) return '';
+  if (!content) return null;
 
-    try {
-      // If content is already a string (raw HTML fallback)
-      if (typeof content === 'string') {
-        return sanitizeHtml(content);
-      }
-
-      // If content is Tiptap JSON, convert via resilient AST converter
-      if (typeof content === 'object') {
-        const rawHtml = astToHtml(content);
-        return sanitizeHtml(rawHtml);
-      }
-
-      return '';
-    } catch (err) {
-      console.error('Error rendering rich text:', err);
-      return '';
+  let renderedHtml = '';
+  try {
+    if (typeof content === 'string') {
+      renderedHtml = sanitizeHtml(content);
+    } else if (typeof content === 'object') {
+      renderedHtml = sanitizeHtml(astToHtml(content));
     }
-  }, [content]);
-
-  if (!renderedHtml) {
-    return null;
+  } catch {
+    renderedHtml = '';
   }
+
+  if (!renderedHtml) return null;
 
   return (
     <div
