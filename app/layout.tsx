@@ -4,8 +4,16 @@ import { siteConfig } from '@/lib/site-config';
 import { LanguageProvider } from '@/lib/i18n/language-context';
 import './globals.css';
 
+const siteBaseUrl = (() => {
+  try {
+    return new URL(siteConfig.url);
+  } catch {
+    return new URL('https://www.puneprimetimes.in');
+  }
+})();
+
 export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
+  metadataBase: siteBaseUrl,
   title: {
     default: siteConfig.name,
     template: `%s | ${siteConfig.name}`,

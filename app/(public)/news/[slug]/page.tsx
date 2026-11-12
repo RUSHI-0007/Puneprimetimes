@@ -67,9 +67,11 @@ export async function generateMetadata({
         images: [
           {
             url: ogImage,
+            secureUrl: ogImage,
             width: 1200,
             height: 630,
             alt: title,
+            type: ogImage.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg',
           },
         ],
       },
