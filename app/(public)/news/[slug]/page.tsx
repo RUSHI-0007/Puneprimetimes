@@ -45,7 +45,7 @@ export async function generateMetadata({
       article.excerpt || `${article.title} - Read full report on ${siteConfig.name}`;
     const baseUrl = siteConfig.url.replace(/\/$/, '');
     const articleUrl = `${baseUrl}/news/${article.slug}`;
-    const rawImage = article.cover_image_url || '/og-image.jpg';
+    const rawImage = article.cover_image_url || siteConfig.ogImage;
     const ogImage = rawImage.startsWith('http')
       ? rawImage
       : `${baseUrl}${rawImage.startsWith('/') ? '' : '/'}${rawImage}`;

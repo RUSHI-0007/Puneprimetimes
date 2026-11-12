@@ -22,7 +22,7 @@ export const siteConfig = {
     'Pune Prime Times is the premier digital news publication covering Pune, Baramati, Pimpri-Chinchwad, and Maharashtra with speed, depth, and integrity.',
   tagline: process.env.NEXT_PUBLIC_SITE_TAGLINE || 'Truth. Speed. Insight.',
   url: getCanonicalSiteUrl(),
-  ogImage: '/og-image.jpg',
+  ogImage: '/opengraph-image',
   links: {
     twitter: 'https://twitter.com/PunePrimeTimes',
     whatsapp: 'https://whatsapp.com/channel/PunePrimeTimes',

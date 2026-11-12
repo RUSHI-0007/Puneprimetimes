@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { Share2, Link as LinkIcon, Check, MessageCircle } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n/language-context';
 
@@ -31,10 +30,9 @@ export default function ShareButtons({ title, url, excerpt }: ShareButtonsProps)
     try {
       await navigator.clipboard.writeText(cleanUrl);
       setCopied(true);
-      toast.success(language === 'mr' ? 'बातमीची लिंक कॉपी झाली!' : 'Link copied to clipboard!');
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      toast.error('Failed to copy link');
+      // fallback
     }
   };
 
@@ -99,12 +97,12 @@ export default function ShareButtons({ title, url, excerpt }: ShareButtonsProps)
         {copied ? (
           <>
             <Check className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Copied!</span>
+            <span>{language === 'mr' ? 'कॉपी झाली!' : 'Copied!'}</span>
           </>
         ) : (
           <>
             <LinkIcon className="w-3.5 h-3.5" />
-            <span>Copy Link</span>
+            <span>{language === 'mr' ? 'लिंक कॉपी' : 'Copy Link'}</span>
           </>
         )}
       </button>

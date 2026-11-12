@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Toaster } from 'sonner';
+import ToastProvider from '@/components/ui/ToastProvider';
 import { siteConfig } from '@/lib/site-config';
 import { LanguageProvider } from '@/lib/i18n/language-context';
 import './globals.css';
@@ -83,7 +83,7 @@ export default function RootLayout({
         <LanguageProvider>
           {children}
         </LanguageProvider>
-        <Toaster position="top-right" richColors closeButton />
+        <ToastProvider />
       </body>
     </html>
   );
