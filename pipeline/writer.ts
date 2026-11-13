@@ -98,40 +98,40 @@ export async function writeArticleDraft(
     publishedAt: it.pubDate
   }));
 
-  const langInstruction =
-    language === 'mr'
-      ? `Write the title, excerpt, and article body paragraphs strictly in professional, grammatically polished MARATHI (मराठी). (Provide a URL-friendly English slug for URL safety).`
-      : `Write the title, excerpt, and article body paragraphs strictly in objective, polished ENGLISH.`;
-
   const prompt = `You are a senior investigative news editor for Pune Prime Times (पुणे प्राईम टाईम्स).
-You have reports from multiple verified news outlets about a breaking or developing event:
+You have reports from multiple verified news outlets about a breaking or developing event in ${cluster.region === 'baramati' ? 'Baramati / Pune District' : 'Pune / Maharashtra'}:
 
 ${JSON.stringify(sourcesSummary, null, 2)}
 
 TASK:
-Verify the facts across these reports and draft an ORIGINAL, fact-checked news article.
-
-LANGUAGE INSTRUCTION:
-${langInstruction}
+Verify the facts across these reports and draft an ORIGINAL, fact-checked bilingual news article.
+Provide BOTH full Marathi and publication-ready English text.
 
 STRICT JOURNALISTIC RULES:
 1. TRUTH & SOURCING: Use ONLY verified facts supported by the sources above. Never invent names, numbers, causes, quotes, or background.
 2. CONSENSUS RULE: Include a fact in the main narrative only if at least 2 outlets agree on it. If a detail is reported by only 1 outlet, omit it or note it in "verification_notes" as single-sourced.
 3. CONFLICTS: If outlets contradict each other (e.g. differing casualties, timing, or statements), state the discrepancy neutrally in "verification_notes" and use cautious language.
-4. FRESH PROSE: Write in fresh, original words. NEVER copy verbatim phrases from the outlets. Maximum ONE short quote (under 15 words), strictly attributed (e.g., "..." असे पुणे पोलिसांनी सांगितले).
+4. FRESH PROSE: Write in fresh, original words. NEVER copy verbatim phrases from the outlets. Maximum ONE short quote (under 15 words), strictly attributed.
 5. SENSITIVE TOPICS / SAFETY:
    - If the story involves active crime investigations naming minors or sexual assault victims, communal/religious tension, or unconfirmed fatalities, set "needs_careful_review": true and note why in verification_notes.
 6. IMAGE SUGGESTION: DO NOT suggest downloading images from the source outlets. Instead, describe a generic representative photograph (e.g. "Pune Metro train on elevated viaduct at sunset") and provide 3 relevant search keywords.
 
 Respond strictly with a JSON object (no markdown fences):
 {
-  "title": "Clear, informative headline in ${language === 'mr' ? 'Marathi' : 'English'}",
+  "title": "Clear, informative headline in Marathi (मराठी)",
+  "title_en": "Clear, journalistic headline in English",
   "slug": "url-friendly-english-slug-separated-by-hyphens",
-  "excerpt": "A concise 1-2 sentence lead summary (under 250 characters)",
+  "excerpt": "A concise 1-2 sentence lead summary in Marathi (under 250 characters)",
+  "excerpt_en": "A concise 1-2 sentence lead summary in English (under 250 characters)",
   "paragraphs": [
-    "Opening lead paragraph answering who, what, where, when.",
-    "Second paragraph detailing key confirmed facts and official quotes/statements.",
-    "Third paragraph providing context, civic impact, or next steps."
+    "Opening lead paragraph in Marathi answering who, what, where, when.",
+    "Second paragraph in Marathi detailing key confirmed facts and official quotes/statements.",
+    "Third paragraph in Marathi providing context, civic impact, or next steps."
+  ],
+  "paragraphs_en": [
+    "Opening lead paragraph in English answering who, what, where, when.",
+    "Second paragraph in English detailing key confirmed facts and official quotes/statements.",
+    "Third paragraph in English providing context, civic impact, or next steps."
   ],
   "confidence": "high" | "medium" | "low",
   "verification_notes": "Detailed notes on facts cross-checked, agreement between outlets, single-source details, or any discrepancies noted.",
@@ -142,7 +142,6 @@ Respond strictly with a JSON object (no markdown fences):
 }`;
 
   try {
-    // Attempt with Google Search grounding tool first to verify latest facts
     const { text, grounded } = await gemini.generateText(prompt, { withGrounding: true });
 
     const cleanedText = text
@@ -163,8 +162,9 @@ Respond strictly with a JSON object (no markdown fences):
     // Ensure English URL-safe slug
     const safeSlug = parsed.slug ? slugify(parsed.slug) : slugify(cluster.headlineSummary);
 
-    // Build Tiptap JSON content doc
-    const tiptapDoc = buildTiptapDoc(parsed.paragraphs || [], sourceUrls, language);
+    // Build Tiptap JSON content docs (Marathi & English)
+    const tiptapDocMr = buildTiptapDoc(parsed.paragraphs || [], sourceUrls, 'mr');
+    const tiptapDocEn = buildTiptapDoc(parsed.paragraphs_en || parsed.paragraphs || [], sourceUrls, 'en');
 
     // Confidence adjustment: if grounding wasn't available, max confidence is medium
     let confidence: 'high' | 'medium' | 'low' = parsed.confidence || 'medium';
@@ -179,7 +179,7 @@ Respond strictly with a JSON object (no markdown fences):
       language,
       categorySlug: parsed.categorySlug || 'city-metro',
       region: cluster.region || 'pune',
-      content: tiptapDoc,
+      content: tiptapDocMr,
       confidence,
       verification_notes: parsed.verification_notes || `Cross-referenced across ${cluster.outlets.join(', ')}.`,
       image_suggestion: parsed.image_suggestion || `Representative image of ${cluster.region === 'baramati' ? 'Baramati' : 'Pune'}`,
@@ -189,7 +189,12 @@ Respond strictly with a JSON object (no markdown fences):
         cluster_size: cluster.items.length,
         outlets: cluster.outlets,
         region: cluster.region || 'pune',
-        grounded
+        grounded,
+        title_en: parsed.title_en || parsed.title,
+        excerpt_en: parsed.excerpt_en || parsed.excerpt,
+        content_en: tiptapDocEn,
+        reporter_name: 'Rohit Pawar',
+        reporter_email: 'puneprimetimes@gmail.com'
       },
       source_urls: sourceUrls
     };
@@ -198,4 +203,3 @@ Respond strictly with a JSON object (no markdown fences):
     return null;
   }
 }
-

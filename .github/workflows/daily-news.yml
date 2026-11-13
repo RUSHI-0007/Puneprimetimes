@@ -2,8 +2,8 @@ name: Daily AI News Pipeline
 
 on:
   schedule:
-    # 01:00 UTC = 06:30 AM IST (Indian Standard Time) every morning
-    - cron: '0 1 * * *'
+    # 02:30 UTC = 08:00 AM IST (Indian Standard Time) every morning
+    - cron: '30 2 * * *'
   workflow_dispatch:
     inputs:
       pune_stories:
@@ -53,6 +53,6 @@ jobs:
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             DRY_RUN_FLAG="--dry-run"
           fi
-          npx tsx pipeline/run.ts --pune-stories=$PUNE_COUNT --baramati-stories=$BARAMATI_COUNT $DRY_RUN_FLAG
+          npx tsx pipeline/run.ts --pune-stories=$PUNE_COUNT --baramati-stories=$BARAMATI_COUNT --publish $DRY_RUN_FLAG
 
 

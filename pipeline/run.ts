@@ -36,6 +36,7 @@ import { writeArticleDraft } from './writer';
 // Read arguments
 const args = process.argv.slice(2);
 const isDryRun = args.includes('--dry-run');
+const shouldPublish = args.includes('--publish');
 const puneArg = args.find((a) => a.startsWith('--pune-stories='));
 const baramatiArg = args.find((a) => a.startsWith('--baramati-stories='));
 const maxStoriesArg = args.find((a) => a.startsWith('--max-stories='));
@@ -424,6 +425,9 @@ async function runPipeline() {
           ? `Source: ${cluster.outlets.join(', ')}`
           : stockImage.credit;
 
+        const status = shouldPublish ? 'published' : 'draft';
+        const published_at = shouldPublish ? new Date().toISOString() : null;
+
         const { data: insertedArticle, error: articleErr } = await supabase
           .from('articles')
           .insert({
@@ -433,11 +437,12 @@ async function runPipeline() {
             content: draft.content,
             cover_image_url: finalCoverImage,
             category_id: categoryId,
-            status: 'draft', // NEVER PUBLISH AUTOMATICALLY!
+            author_id: '896deeca-7aa3-4b60-85ae-532cf9448ee0', // Rohit Pawar
+            status,
             language: draft.language,
             is_featured: false,
             is_breaking: false,
-            published_at: null,
+            published_at,
             ai_generated: true,
             confidence: draft.confidence,
             verification_notes: draft.verification_notes,
@@ -446,7 +451,9 @@ async function runPipeline() {
             flags: {
               ...draft.flags,
               region: cluster.region || draft.region || 'pune',
-              image_credit: imageCredit
+              image_credit: imageCredit,
+              reporter_name: 'Rohit Pawar',
+              reporter_email: 'puneprimetimes@gmail.com'
             }
           })
           .select('id, slug')
@@ -498,6 +505,23 @@ async function runPipeline() {
       console.log('✓ Run metrics logged to ai_run_logs table in Supabase.');
     } catch (e: any) {
       console.warn('[Supabase] Failed to save ai_run_logs:', e.message);
+    }
+  }
+
+  // Trigger ISR revalidation if published
+  if (shouldPublish && report.draftsCreated > 0) {
+    try {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.puneprimetimes.in';
+      const cleanSite = siteUrl.replace(/\/$/, '');
+      const res = await fetch(`${cleanSite}/api/revalidate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: '/' })
+      });
+      const data = await res.json();
+      console.log('✓ Triggered on-demand ISR revalidation for homepage:', data);
+    } catch (err: any) {
+      console.warn('Revalidation warning:', err.message);
     }
   }
 
