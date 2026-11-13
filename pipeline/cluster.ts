@@ -109,8 +109,16 @@ Return ONLY a valid JSON object with no markdown fences, matching this format:
       }
     }
 
-    // Rank clusters by number of outlets descending, then number of items
+    // Rank clusters by:
+    // 1. Stories with authentic publisher photo (prioritized)
+    // 2. Number of outlets descending (cross-outlet verification)
+    // 3. Number of items
     clusters.sort((a, b) => {
+      const aHasImg = a.imageUrl ? 1 : 0;
+      const bHasImg = b.imageUrl ? 1 : 0;
+      if (bHasImg !== aHasImg) {
+        return bHasImg - aHasImg;
+      }
       if (b.outlets.length !== a.outlets.length) {
         return b.outlets.length - a.outlets.length;
       }

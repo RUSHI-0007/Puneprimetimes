@@ -32,6 +32,8 @@ import { RateLimiter } from './rate-limiter';
 import { GeminiClient } from './gemini-client';
 import { clusterStories } from './cluster';
 import { writeArticleDraft } from './writer';
+import { resolveGuaranteedArticleImage } from './image-resolver';
+import { enrichClusterWithOgImage } from './image-fetcher';
 
 // Read arguments
 const args = process.argv.slice(2);
@@ -365,6 +367,14 @@ async function runPipeline() {
   report.eligibleClusters = clusters.length;
   console.log(`Formed ${clusters.length} total story clusters (${clusters.filter((c) => c.region === 'pune').length} Pune + ${clusters.filter((c) => c.region === 'baramati').length} Baramati).`);
 
+  // Step 2c: Enrich stories with authentic source photos via OpenGraph metadata
+  console.log('\n📸 Step 2c: Checking source article URLs for publisher photos (og:image)...');
+  for (const cluster of clusters) {
+    if (!cluster.imageUrl) {
+      await enrichClusterWithOgImage(cluster);
+    }
+  }
+
   // Step 4: Write Draft Articles
   console.log('\n✍️ Step 3: Verifying facts and generating draft articles...');
 
@@ -420,10 +430,9 @@ async function runPipeline() {
         // Save to Supabase as DRAFT
         const categoryId = categoryMap.get(draft.categorySlug) || categoryMap.get('city-metro') || null;
 
-        const finalCoverImage = cluster.imageUrl || stockImage.url || null;
-        const imageCredit = cluster.imageUrl
-          ? `Source: ${cluster.outlets.join(', ')}`
-          : stockImage.credit;
+        const resolvedImage = resolveGuaranteedArticleImage(cluster, draft);
+        const finalCoverImage = resolvedImage.url;
+        const imageCredit = resolvedImage.credit;
 
         const status = shouldPublish ? 'published' : 'draft';
         const published_at = shouldPublish ? new Date().toISOString() : null;
