@@ -2,8 +2,8 @@ name: Daily AI News Pipeline
 
 on:
   schedule:
-    # 00:30 UTC = 06:00 AM IST (Indian Standard Time) every morning
-    - cron: '30 0 * * *'
+    # 00:25 UTC = 05:55 AM IST (Off-peak cron to prevent GitHub queue drops)
+    - cron: '25 0 * * *'
   workflow_dispatch:
     inputs:
       pune_stories:
@@ -54,5 +54,27 @@ jobs:
             DRY_RUN_FLAG="--dry-run"
           fi
           npx tsx pipeline/run.ts --pune-stories=$PUNE_COUNT --baramati-stories=$BARAMATI_COUNT --publish $DRY_RUN_FLAG
+
+      - name: Revalidate Website Cache
+        run: |
+          node -e '
+          const https = require("https");
+          ["/", "/news", "/admin", "/categories"].forEach((path) => {
+            const postData = JSON.stringify({ path });
+            const req = https.request(
+              "https://www.puneprimetimes.in/api/revalidate",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Content-Length": Buffer.byteLength(postData),
+                },
+              },
+              (res) => console.log(`Revalidated ${path}: ${res.statusCode}`)
+            );
+            req.write(postData);
+            req.end();
+          });
+          '
 
 
