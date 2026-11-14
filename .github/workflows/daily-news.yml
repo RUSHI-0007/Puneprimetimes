@@ -29,14 +29,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 22
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Execute News Pipeline (5 Pune + 5 Baramati)
         env:
@@ -47,8 +46,10 @@ jobs:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           OUTPUT_LANGUAGES: 'mr'
         run: |
-          PUNE_COUNT="${{ github.event.inputs.pune_stories || '5' }}"
-          BARAMATI_COUNT="${{ github.event.inputs.baramati_stories || '5' }}"
+          PUNE_COUNT="${{ github.event.inputs.pune_stories }}"
+          [ -z "$PUNE_COUNT" ] && PUNE_COUNT="5"
+          BARAMATI_COUNT="${{ github.event.inputs.baramati_stories }}"
+          [ -z "$BARAMATI_COUNT" ] && BARAMATI_COUNT="5"
           DRY_RUN_FLAG=""
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             DRY_RUN_FLAG="--dry-run"

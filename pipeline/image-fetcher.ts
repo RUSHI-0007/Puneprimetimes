@@ -134,3 +134,4 @@ export async function enrichClusterWithOgImage(cluster: StoryCluster): Promise<s
 
   return null;
 }
+
